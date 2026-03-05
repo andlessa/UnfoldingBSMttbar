@@ -5,9 +5,12 @@ Repository for holding code and data for the BSM ttbar project
 
 Below we describe the folders stored in this repository. 
 
- * [processFolders](./processFolders): Contains the \texttt{MadGraph5} process directories for the VLF, scalar, $Z'$, and Standard Model implementations. Within each directory, the corresponding process subfolder includes the input cards used for the generation, as well as the \texttt{Events} folder, which contains the banner and LHE files.
+ * [data_samples](./data_samples/): Folder containing the $p p \rightarrow t \bar{t}$ events at parton level in the LHE format for the  VLF, scalar and $Z'$ models. Note that the events corresponds to the SM plus BSM contribution.
+ In addition the SM folder contains the SM-only events.
+
+ * [processFolders](./processFolders): Contains the `MadGraph5` process directories for the VLF, scalar, $Z'$, and Standard Model implementations. Within each directory, the corresponding process subfolder includes the input cards used for the generation, as well as the `Events folder, which contains the banner and LHE files.
  ---
- * [Distributions](./processFolders/Distributions/): Directory containing the \texttt{.npz} files, organized into separate subfolders for each model.
+ * [Distributions](./processFolders/Distributions/): Directory containing the `.npz` files, organized into separate subfolders for each model.
  ---
  * [UFO_Models](./UFO_Models): stores UFO for each model. 
  ---
