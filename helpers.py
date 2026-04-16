@@ -1,8 +1,7 @@
-
 """
 helpers.py
 
-Useful functions for the project
+Useful functions for calculations and plotting
 """
 
 import os
@@ -20,7 +19,11 @@ SQRT_S = 13000.0  # Center of mass energy in GeV
 # ============================================================
 
 def download_data_files(base_url, files_dict, out_dir="data"):
-    """Fetches LHE files from a remote repository if not found locally."""
+    """
+    Checks the local directory for the specified dataset files. 
+    If a file is missing, it is downloaded from the designated remote 
+    repository (e.g., GitHub raw content).
+    """
     os.makedirs(out_dir, exist_ok=True)
     for name, url in files_dict.items():
         out = os.path.join(out_dir, f"{name}.lhe.gz")
@@ -31,6 +34,11 @@ def download_data_files(base_url, files_dict, out_dir="data"):
             print(f"{out} already exists")
 
 def load_model_data(base_path, model_name, rescale=1.0):
+    """
+    Aggregates all .npz simulation files corresponding to a specific 
+    physics model, applies a universal weight rescaling factor (for 
+    coupling adjustments), and returns a consolidated Pandas DataFrame.
+    """
     file_pattern = f"{base_path}/*{model_name}*.npz"
     files = glob.glob(file_pattern)
 
@@ -53,25 +61,34 @@ def load_model_data(base_path, model_name, rescale=1.0):
 # ============================================================
 
 def rapidity(E, pz, eps=1e-12):
+    """Calculates the momentum-dependent rapidity of a particle."""
     num, den = E + pz, E - pz
     if num <= eps or den <= eps: return np.nan
     return 0.5 * np.log(num / den)
 
 def pt(px, py):
+    """Calculates the transverse momentum (pT)."""
     return np.hypot(px, py)
 
 def phi(px, py):
+    """Calculates the azimuthal angle phi."""
     return np.arctan2(py, px)
 
 def delta_phi(phi1, phi2):
+    """Calculates the difference in azimuthal angle between two particles."""
     d = phi1 - phi2
     return (d + np.pi) % (2 * np.pi) - np.pi
 
 def mass(E, px, py, pz):
+    """Calculates the invariant mass from a 4-momentum vector."""
     m2 = E*E - px*px - py*py - pz*pz
     return np.sqrt(max(m2, 0.0))
 
 def boost_to_rest_frame(p4, parent):
+    """
+    Performs a Lorentz transformation, boosting a 4-momentum vector (p4) 
+    into the rest frame of its parent particle/system.
+    """
     E, px, py, pz = p4
     EP, Px, Py, Pz = parent
     bx, by, bz = Px/EP, Py/EP, Pz/EP
@@ -87,6 +104,11 @@ def boost_to_rest_frame(p4, parent):
     return np.array([Ep, pxp, pyp, pzp], dtype=float)
 
 def parse_event_block(lines, rescale_weight_by=1.0):
+    """
+    Parses a single <event> block from an LHE file, extracting top quark 
+    kinematics and calculating macroscopic event-level observables like 
+    invariant mass (m_tt) and transverse momentum (pT).
+    """
     content = [ln.strip() for ln in lines if ln.strip()]
     if not content: return None
 
@@ -134,6 +156,10 @@ def parse_event_block(lines, rescale_weight_by=1.0):
     }
 
 def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1.0):
+    """
+    Iterates through a compressed or raw LHE file, feeding events to the parser 
+    and compiling the returned variables into an analysis-ready Pandas DataFrame.
+    """
     rows, block, in_event = [], [], False
     opener = gzip.open if filepath.endswith(".gz") else open
     
@@ -156,10 +182,11 @@ def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1
     return pd.DataFrame(rows)
 
 # ============================================================
-# Mathematics & Statistics
+# Histogram & Template Operations
 # ============================================================
 
 def class_normalized_weights(df, label_col="label", weight_col="weight"):
+    """Normalizes the event weights so that each physical model class sums to 1.0."""
     w = df[weight_col].astype(float).copy()
     out = np.zeros(len(df), dtype=float)
     for lab in df[label_col].unique():
@@ -169,45 +196,58 @@ def class_normalized_weights(df, label_col="label", weight_col="weight"):
     return out
 
 def event_number_normalization(h_ref, h, lum=500.0):
+    """
+    Scales a histogram template to match the absolute expected physical event yields, 
+    aligning cross-sections based on the provided detector luminosity.
+    """
     n_ref, n = lum * np.asarray(h_ref, dtype=float) * 1000.0, lum * np.asarray(h, dtype=float) * 1000.0
     return n * sum(n_ref)/sum(n) if sum(n) != 0 else n
 
 def weighted_hist(x, w, bins):
+    """Generates a standard weighted 1D histogram array."""
     h, _ = np.histogram(x, bins=bins, weights=np.abs(w))
     return h.astype(float)
 
 def build_template(x, w, bins, alpha=1e-12, density=False):
+    """Generates a histogram template, applying a safety epsilon and optional PDF normalization."""
     h, _ = np.histogram(x, bins=bins, weights=np.abs(w))
     h = h.astype(float) + alpha
     if density: h /= h.sum()
     return h
 
 def build_shape_template(h, alpha=1e-12):
+    """Converts an absolute histogram array into a normalized probability distribution."""
     h_shape = h + alpha
     return h_shape / h_shape.sum()
 
 def build_signed_delta(h_hyp, h_sm, alpha=1e-12):
+    """Calculates the bin-by-bin fractional difference from the Standard Model background."""
     return (h_hyp - h_sm) / (h_sm + alpha)
 
 def normalize_signed_template(delta, alpha=1e-12):
+    """Normalizes the fractional difference array to isolate shape deformations from overall rate shifts."""
     norm = np.sum(np.abs(delta))
     return delta / norm if norm > alpha else None
 
 def js_divergence(p, q, eps=1e-12):
+    """Calculates the symmetric Jensen-Shannon divergence between two distributions."""
     p, q = np.asarray(p, dtype=float) + eps, np.asarray(q, dtype=float) + eps
     p, q = p / p.sum(), q / q.sum()
     m = 0.5 * (p + q)
     return 0.5 * np.sum(p * np.log(p / m)) + 0.5 * np.sum(q * np.log(q / m))
 
 def kl_divergence(p, q, eps=1e-12):
+    """Calculates the directed Kullback-Leibler divergence between two distributions."""
     p, q = np.asarray(p, dtype=float) + eps, np.asarray(q, dtype=float) + eps
     p, q = p / p.sum(), q / q.sum()
     return np.sum(p * np.log(p / q))
 
 def signed_l2_distance(d1, d2):
+    """Calculates the root-mean-square Euclidean distance between two arrays."""
     return np.sqrt(np.mean((d1 - d2)**2))
 
 def asimov_shape_llr_stat_only(p_true, p_test, N=10000, eps=1e-12):
+    """Calculates standard shape-only Asimov significance assuming perfect detection (No Systematics)."""
     p_true, p_test = np.asarray(p_true, dtype=float) + eps, np.asarray(p_test, dtype=float) + eps
     p_true, p_test = p_true / p_true.sum(), p_test / p_test.sum()
     n = N * p_true
@@ -219,6 +259,11 @@ def asimov_shape_llr_stat_only(p_true, p_test, N=10000, eps=1e-12):
 # ============================================================
 
 def calc_variance_hat_delta(h_hyp, h_sm, eps, alpha=1e-12):
+    """
+    Computes the rigorous propagated variance for the Normalized Falloff Method.
+    Includes both the local per-bin variance component and the global leakage component 
+    created by the shape-isolation normalization.
+    """
     n_hyp = h_hyp
     n_sm = h_sm
     delta = (n_hyp - n_sm) / (n_sm + alpha)
@@ -234,6 +279,10 @@ def calc_variance_hat_delta(h_hyp, h_sm, eps, alpha=1e-12):
     return term_same + term_diff
 
 def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha=1e-12):
+    """
+    Calculates the statistical separation significance between two models utilizing 
+    the Normalized Falloff Method, rigorously propagating systematic uncertainties.
+    """
     var_hat_A = calc_variance_hat_delta(hA, n_sm, eps, alpha=alpha)
     var_hat_B = calc_variance_hat_delta(hB, n_sm, eps, alpha=alpha)
     
@@ -244,6 +293,10 @@ def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha=1e-12):
     return np.sqrt(max(np.sum(num / den), 0.0)), num, den
 
 def asimov_shape_Z_with_syst(p_true, p_test, frac_syst=0.05, mode="avg", eps=1e-12):
+    """
+    Calculates the statistical separation significance using the traditional 
+    Standard Shape Method, penalizing the baseline with fractional diagonal systematics.
+    """
     p_true = np.asarray(p_true, dtype=float) + eps
     p_test = np.asarray(p_test, dtype=float) + eps
 
@@ -260,12 +313,14 @@ def asimov_shape_Z_with_syst(p_true, p_test, frac_syst=0.05, mode="avg", eps=1e-
 # ============================================================
 
 def beautify_axis(ax, grid=False):
+    """Applies a clean, scientific styling to matplotlib axes."""
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.tick_params(direction="in", top=False, right=False, length=5)
     if grid: ax.grid(True, alpha=0.22, linewidth=0.7)
 
 def get_best_pair_and_cut(df, N=100000):
+    """Searches the significance DataFrame to find the model pair and mass cut yielding the highest separation Z."""
     col = df.columns[-1]
     for c in [f"Z_{N}_a_true", f"Z_{N}_eps_00", f"Z_{N}_eps_02", "Z_eps_00", "Z_eps_02", "Z_shape"]:
         if c in df.columns:
@@ -275,4 +330,5 @@ def get_best_pair_and_cut(df, N=100000):
     return row["pair"], int(row["mcut"])
 
 def split_pair(pair):
+    """Splits a pair string (e.g. 'Scalar vs Zprime') into a tuple for component analysis."""
     return pair.split(" vs ")
