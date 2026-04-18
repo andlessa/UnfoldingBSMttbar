@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from matplotlib.ticker import MaxNLocator
+from itertools import combinations
+import matplotlib.pyplot as plt
 
 SQRT_S = 13000.0  # Center of mass energy in GeV
 
@@ -338,16 +340,12 @@ def split_pair(pair):
 # Optimized Mass & Luminosity Scans
 # ============================================================
 
-def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, ref_model='Zprime'):
+def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, ref_model='Zprime', bin_offset=0.0):
     """
-    Executes a luminosity scan using pure NumPy arrays.
-    Calculates both Standard Shape and Normalized Falloff significances simultaneously
-    across different integrated luminosities at a fixed mass cut.
+    Executes an ultra-fast luminosity scan using pure NumPy arrays.
+    Calculates both Standard Shape and Normalized Falloff significances simultaneously.
     """
-    # --------------------------------------------------------
-    # Background (SM) Preparation
-    # --------------------------------------------------------
-    # Apply fast NumPy boolean masking to extract events strictly within the target mass tail
+    # Filter SM data
     sm_x, sm_w = sm_data["x"], sm_data["w"]
     sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
     sm_x_tail, sm_w_tail = sm_x[sm_mask], sm_w[sm_mask]
@@ -356,8 +354,8 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
         print(f"Warning: 0 SM events found above {target_mcut} GeV.")
         return pd.DataFrame()
 
-    # Generate the base unscaled Standard Model probability histogram
-    bins = np.arange(target_mcut, mcut_max + bin_width, bin_width)
+    bins = np.arange(target_mcut + bin_offset, mcut_max + bin_width, bin_width)
+
     h_sm_raw = weighted_hist(sm_x_tail, sm_w_tail, bins)
 
     # --------------------------------------------------------
@@ -660,6 +658,52 @@ def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None):
         
         ax.set_title(pair_latex.get(pair, pair))
         ax.set_xlabel(rf"$m_{{t\bar t}}^{{\min}}$ [$m_{{t\bar t}}^{{\max}}={upper_lim}$] [GeV]")
+        beautify_axis(ax, grid=True)
+
+    axes[0].set_ylabel(rf"Improvement Ratio ($Z_{{\rm falloff}}/Z_{{\rm shape}}$)")
+    axes[-1].legend(loc="best")
+
+    plt.tight_layout()
+    if outfile:
+        fig.savefig(outfile, bbox_inches="tight")
+    plt.show()
+
+def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None):
+    """
+    Plots the Improvement Ratio (Z_falloff / Z_shape) across different luminosities.
+    """
+    pair_colors = {"Scalar vs VLF": "#1f77b4", "Scalar vs Zprime": "#2ca02c", "VLF vs Zprime": "#d62728"}
+    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
+    eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
+    
+    pairs = list(results["pair"].unique())
+
+    fig, axes = plt.subplots(1, len(pairs), figsize=(5.2 * len(pairs), 4.8), sharey=True)
+    if len(pairs) == 1: axes = [axes]
+
+    for ax, pair in zip(axes, pairs):
+        sub_pair = results[results["pair"] == pair].sort_values("lumi")
+        
+        for eps in eps_values:
+            fa_col = f"Z_fa_eps_{int(100*eps):02d}"
+            sh_col = f"Z_sh_eps_{int(100*eps):02d}"
+            if fa_col not in sub_pair.columns or sh_col not in sub_pair.columns: continue
+            
+            # Safely calculate the improvement ratio using np.where to prevent division-by-zero
+            with np.errstate(divide='ignore', invalid='ignore'):
+                ratio = np.where(sub_pair[sh_col] > 0, sub_pair[fa_col] / sub_pair[sh_col], np.nan)
+            
+            ls, mk = eps_styles.get(eps, ('-', 'o'))
+            color = pair_colors.get(pair, "black")
+            
+            ax.plot(sub_pair["lumi"], ratio, linestyle=ls, marker=mk,
+                    color=color, label=rf"${int(100*eps)}\%$ syst.")
+
+        # Add a baseline reference at 1.0 representing equal performance between methods
+        ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0)
+        
+        ax.set_title(pair_latex.get(pair, pair))
+        ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
         beautify_axis(ax, grid=True)
 
     axes[0].set_ylabel(rf"Improvement Ratio ($Z_{{\rm falloff}}/Z_{{\rm shape}}$)")
