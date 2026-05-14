@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from matplotlib.ticker import MaxNLocator
-from itertools import combinations
 import matplotlib.pyplot as plt
 
 SQRT_S = 13000.0  # Center of mass energy in GeV
@@ -208,12 +207,12 @@ def event_number_normalization(h_ref, h, lum=500.0):
 
 def weighted_hist(x, w, bins):
     """Generates a standard weighted 1D histogram array."""
-    h, _ = np.histogram(x, bins=bins, weights=np.abs(w))
+    h, _ = np.histogram(x, bins=bins, weights=w)
     return h.astype(float)
 
 def build_template(x, w, bins, alpha=1e-12, density=False):
     """Generates a histogram template, applying a safety epsilon and optional PDF normalization."""
-    h, _ = np.histogram(x, bins=bins, weights=np.abs(w))
+    h, _ = np.histogram(x, bins=bins, weights=w)
     h = h.astype(float) + alpha
     if density: h /= h.sum()
     return h
@@ -281,7 +280,7 @@ def calc_variance_hat_delta(h_hyp, h_sm, eps, alpha=1e-12):
     
     return term_same + term_diff
 
-def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha=1e-12):
+def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, mode="avg", alpha=1e-12):
     """
     Calculates the statistical separation significance between two models utilizing 
     the Normalized Falloff Method, rigorously propagating systematic uncertainties.
@@ -289,7 +288,8 @@ def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha=1e-12):
     var_hat_A = calc_variance_hat_delta(hA, n_sm, eps, alpha=alpha)
     var_hat_B = calc_variance_hat_delta(hB, n_sm, eps, alpha=alpha)
     
-    var_n_ref = (1/2)**2 * (var_hat_A + var_hat_B)
+    if mode =="test": var_n_ref = var_hat_B
+    else: var_n_ref = (1/2)**2 * (var_hat_A + var_hat_B)
     num = (dA - dB)**2
     den = var_n_ref + alpha
     
@@ -332,20 +332,21 @@ def get_best_pair_and_cut(df, N=100000):
     row = df.loc[df[col].idxmax()]
     return row["pair"], int(row["mcut"])
 
-def split_pair(pair):
-    """Splits a pair string (e.g. 'Scalar vs Zprime') into a tuple for component analysis."""
-    return pair.split(" vs ")
+def format_model_label(model_name):
+    """Helper function to format model names dynamically for plots."""
+    formatted = model_name.replace("Zprime", r"$Z^\prime$")
+    formatted = formatted.replace("FakeData", "Fake Data")
+    return formatted
 
 # ============================================================
 # Optimized Mass & Luminosity Scans
 # ============================================================
 
-def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, ref_model='Zprime', bin_offset=0.0):
+def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0):
     """
-    Executes an ultra-fast luminosity scan using pure NumPy arrays.
-    Calculates both Standard Shape and Normalized Falloff significances simultaneously.
+    Executes an ultra-fast luminosity scan.
+    Explicitly tests every other model against the 'fake_model' acting as the Asimov dataset.
     """
-    # Filter SM data
     sm_x, sm_w = sm_data["x"], sm_data["w"]
     sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
     sm_x_tail, sm_w_tail = sm_x[sm_mask], sm_w[sm_mask]
@@ -355,7 +356,6 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
         return pd.DataFrame()
 
     bins = np.arange(target_mcut + bin_offset, mcut_max + bin_width, bin_width)
-
     h_sm_raw = weighted_hist(sm_x_tail, sm_w_tail, bins)
 
     # --------------------------------------------------------
@@ -363,20 +363,31 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
     # --------------------------------------------------------
     raw_templates = {}
     for lab in labels:
-        if lab not in bsm_data: return pd.DataFrame()
+        if lab not in bsm_data: continue
         
-        # Apply the exact same mass tail filter to the signal models
         lab_x, lab_w = bsm_data[lab]["x"], bsm_data[lab]["w"]
         hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
-        if np.sum(hyp_mask) == 0: return pd.DataFrame()
+        if np.sum(hyp_mask) == 0: continue
         
-        # Generate raw, unscaled signal templates
         raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
 
-    # Calculate the normalized probability fields required for the Falloff Method
+    if fake_model not in raw_templates:
+        print(f"Error: fake_model '{fake_model}' not found in data.")
+        return pd.DataFrame()
+
+    # Normalize everything perfectly to the fake_model (The Asimov Truth)
+    ref_template = raw_templates[fake_model].copy()
+    scaled_templates = {}
     norm_templates = {}
+    
     for lab in labels:
-        delta = build_signed_delta(raw_templates[lab], h_sm_raw, alpha=alpha)
+        if lab not in raw_templates: continue
+        
+        # Align BSM model yield perfectly to the Fake Data baseline at this cut level
+        aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
+        scaled_templates[lab] = aligned_sig + h_sm_raw
+        
+        delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
         norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
 
     # --------------------------------------------------------
@@ -384,31 +395,25 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
     # --------------------------------------------------------
     rows = []
     for lum in lumi_targets:
-        # Scale the physical SM background yield to the current target luminosity
-        n_sm = h_sm_raw * lum * 1000.0 
+        n_sm = h_sm_raw * lum * 1000.0
 
-        # Align cross-sections: Force all BSM models to yield the exact same total number 
-        # of expected events as the reference model (Zprime) at this specific luminosity
-        scaled_templates = {}
-        ref_template = raw_templates[ref_model].copy()
+        # Only compare models against the designated Fake Data baseline
         for lab in labels:
-            scaled_templates[lab] = event_number_normalization(ref_template, raw_templates[lab], lum=lum)
+            if lab not in raw_templates or lab == fake_model:
+                continue 
 
-        # Loop through all possible model pairs (e.g., Scalar vs VLF) to calculate separation
-        for a, b in combinations(labels, 2):
-            hA, hB = scaled_templates[a], scaled_templates[b]
+            a, b = fake_model, lab
+            
+            hA, hB = scaled_templates[a]*1000.0*lum, scaled_templates[b]*1000.0*lum
             dA, dB = norm_templates[a], norm_templates[b]
             
             base_row = {"lumi": lum, "pair": f"{a} vs {b}"}
             
-            # Compute Asimov Z for different systematic uncertainty fractions
             for eps in eps_values:
-                # Compute separation using the rigorous Normalized Falloff method
-                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha)
+                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, mode = "test", alpha = alpha)
                 base_row[f"Z_fa_eps_{int(100*eps):02d}"] = Z_fa
                 
-                # Compute separation using the traditional Standard Shape counting method
-                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="avg", eps=alpha)
+                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="test", eps=alpha)
                 base_row[f"Z_sh_eps_{int(100*eps):02d}"] = Z_sh
                 
             rows.append(base_row)
@@ -416,72 +421,70 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
     return pd.DataFrame(rows)
 
 
-def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_target, eps_values, alpha=1e-12, ref_model='Zprime', bin_offset=0.0):
+def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_target, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0):
     """
-    Executes a mass cut (m_cut) scan using pure NumPy arrays.
-    Calculates both Standard Shape and Normalized Falloff significances simultaneously
-    across different baseline mass cuts at a fixed luminosity.
+    Executes an ultra-fast mass cut scan.
+    Explicitly tests every other model against the 'fake_model' acting as the Asimov dataset.
     """
     rows = []
     
-    # Loop over the different lower bounds for the mass tail
+    mcut_base = mcuts[0]
+    bins = np.arange(mcut_base + bin_offset, mcut_max + bin_width, bin_width)
+    bin_edges = bins[:-1] 
+    
+    sm_mask = (sm_data["x"] > mcut_base) & (sm_data["x"] <= mcut_max)
+    h_sm_raw = weighted_hist(sm_data["x"][sm_mask], sm_data["w"][sm_mask], bins)
+    n_sm = h_sm_raw * L_target * 1000.0
+
+    raw_templates = {}
+    for lab in labels:
+        if lab not in bsm_data: continue
+        lab_x, lab_w = bsm_data[lab]["x"], bsm_data[lab]["w"]
+        hyp_mask = (lab_x > mcut_base) & (lab_x <= mcut_max)
+        raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
+    
+    if fake_model not in raw_templates:
+        print(f"Error: fake_model '{fake_model}' not found in data.")
+        return pd.DataFrame()
+
+    # Normalize everything perfectly to the fake_model (The Asimov Truth)
+    ref_template = raw_templates[fake_model].copy()
+    for lab in labels:
+        if lab not in raw_templates: continue
+        aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
+        raw_templates[lab] = aligned_sig + n_sm 
+
+    # Array-Slicing Scan Loop
     for mcut in mcuts:
-        # Filter SM data for the current mcut
-        sm_mask = (sm_data["x"] > mcut) & (sm_data["x"] <= mcut_max)
-        sm_x_tail, sm_w_tail = sm_data["x"][sm_mask], sm_data["w"][sm_mask]
+        cut_mask = (bin_edges >= mcut) & (bin_edges < mcut_max)
         
-        # Veto the cut entirely if the background is completely depleted
-        if len(sm_x_tail) == 0:
-            continue
-
-        # Create histogram bins starting at mcut + the optional offset (e.g., +50 GeV)
-        bins = np.arange(mcut + bin_offset, mcut_max + bin_width, bin_width)
+        if not np.any(cut_mask): continue
+            
+        n_sm_cut = n_sm[cut_mask]
         
-        # Calculate physical SM background yields for this specific cut
-        h_sm_raw = weighted_hist(sm_x_tail, sm_w_tail, bins)
-        n_sm = h_sm_raw * L_target * 1000.0
-
-        # Filter BSM data and build raw unscaled templates
-        raw_templates = {}
-        ok = True
-        for lab in labels:
-            if lab not in bsm_data: ok = False; break
-            
-            lab_x, lab_w = bsm_data[lab]["x"], bsm_data[lab]["w"]
-            hyp_mask = (lab_x > mcut) & (lab_x <= mcut_max)
-            
-            # Veto the cut if any specific signal model runs out of events
-            if np.sum(hyp_mask) == 0: ok = False; break
-            
-            raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
-            
-        if not ok: continue
-
-        # Build normalized signed templates for the Falloff Method
         norm_templates = {}
         for lab in labels:
-            delta = build_signed_delta(raw_templates[lab], h_sm_raw, alpha=alpha)
+            if lab not in raw_templates: continue
+            h_combined_cut = raw_templates[lab][cut_mask]
+            delta = build_signed_delta(h_combined_cut, n_sm_cut, alpha=alpha)
             norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
 
-        # Cross-section alignment: force absolute yield matching to the reference model
-        ref_template = raw_templates[ref_model].copy()
+        # Calculate significance components against the fake data
         for lab in labels:
-            raw_templates[lab] = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
-
-        # Calculate significance components for all pairs
-        for a, b in combinations(labels, 2):
-            hA, hB = raw_templates[a], raw_templates[b]
+            if lab not in raw_templates or lab == fake_model: continue
+            
+            a, b = fake_model, lab
+            hA = raw_templates[a][cut_mask]
+            hB = raw_templates[b][cut_mask]
             dA, dB = norm_templates[a], norm_templates[b]
             
             base_row = {"mcut": mcut, "pair": f"{a} vs {b}"}
             
             for eps in eps_values:
-                # Calculate Falloff Significance
-                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, alpha)
+                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm_cut, eps, mode = "test", alpha = alpha)
                 base_row[f"Z_fa_eps_{int(100*eps):02d}"] = Z_fa
                 
-                # Calculate Shape Significance
-                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="avg", eps=alpha)
+                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="test", eps=alpha)
                 base_row[f"Z_sh_eps_{int(100*eps):02d}"] = Z_sh
                 
             rows.append(base_row)
@@ -489,13 +492,11 @@ def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_
     return pd.DataFrame(rows)
 
 
-def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None, excl_stats=False):
+def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None, excl_stats=False, fake_model='FakeData'):
     """
     Plots the Asimov separation Z across different tail cuts (m_cut).
-    Dynamically swaps between Shape Method and Falloff Method based on the `metric` parameter.
     """
     syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
-    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
     
     pairs = list(results["pair"].unique())
     fig, axes = plt.subplots(1, len(pairs), figsize=(5.0*len(pairs), 3.9), sharex=True)
@@ -507,7 +508,6 @@ def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None
         ax = axes[j]
         sub = results[results["pair"] == pair].sort_values("mcut")
 
-        # Optionally drop the statistics-only curve from the plot
         eps_v = eps_values[1:] if excl_stats else eps_values
 
         for eps_syst in eps_v:
@@ -518,52 +518,38 @@ def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None
             label = "stat. only" if eps_syst == 0 else rf"{int(100*eps_syst)}\% syst."
             ax.plot(sub["mcut"], sub[col], marker="o", color=color, linestyle=ls, label=label)
 
-        # --------------------------------------------------------
-        # Add Standard Evidence and Discovery Thresholds
-        # --------------------------------------------------------
-        # These reference lines will be automatically integrated into the main legend
         ax.axhline(3.0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5, label=r"$Z = 3\sigma$")
         ax.axhline(5.0, color='gray', linestyle=':', alpha=0.7, linewidth=1.5, label=r"$Z = 5\sigma$")
 
-        ax.set_title(pair_latex.get(pair, pair))
+        # Format title dynamically
+        ax.set_title(format_model_label(pair))
         
-        # Apply y-axis label only to the leftmost panel to avoid clutter
         if j == 0:
             ax.set_ylabel(r"Separation Significance $Z$")
 
         upper_label = f"{mcut_max}" if mcut_max is not None else r"\infty"
         ax.set_xlabel(rf"$m_{{t\bar t}}^{{\min}}$ up to {upper_label} [GeV]")
         
-        # --------------------------------------------------------
-        # Y-Axis Formatting
-        # --------------------------------------------------------
-        # Force a clean number of y-ticks (3 to 5) and strictly forbid negative ranges
-        ax.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
+        #ax.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
         ax.set_ylim(bottom=0) 
-
         beautify_axis(ax, grid=True) 
 
-    # Extract legend handles from the final axis and deduplicate them
     handles, labels_ = axes[-1].get_legend_handles_labels()
     by_label = dict(zip(labels_, handles))
     
-    # Place a single, perfectly balanced legend at the top of the entire figure
     fig.legend(by_label.values(), by_label.keys(), loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.08))
-
-    fig.suptitle(method_name, fontsize=16, y=1.18)
+    fig.suptitle(method_name + f' [Fake Data Baseline: {format_model_label(fake_model)}]' , fontsize=16, y=1.18)
 
     if outfile:
         fig.savefig(outfile, bbox_inches="tight")
     plt.show()
 
 
-def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_stats=False, shareY=True):
+def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_stats=False, shareY=True, fake_model='FakeData'):
     """
     Plots the Asimov separation Z across different integrated luminosities.
-    Dynamically swaps between Shape Method and Falloff Method based on the `metric` parameter.
     """
     syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
-    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
     
     pairs = list(results["pair"].unique())
     fig, axes = plt.subplots(1, len(pairs), figsize=(5.0*len(pairs), 3.9), sharex=True, sharey=shareY)
@@ -576,7 +562,6 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
         ax = axes[j]
         sub = results[results["pair"] == pair].sort_values("lumi")
 
-        # Optionally drop the statistics-only curve from the plot
         eps_v = eps_values[1:] if excl_stats else eps_values
 
         for eps_syst in eps_v:
@@ -587,34 +572,25 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
             label = "stat. only" if eps_syst == 0 else rf"{int(100*eps_syst)}\% syst."
             ax.plot(sub["lumi"], sub[col], marker="o", color=color, linestyle=ls, label=label)
 
-        # --------------------------------------------------------
-        # Add Standard Evidence and Discovery Thresholds
-        # --------------------------------------------------------
         ax.axhline(3.0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5, label=r"$Z = 3\sigma$")
         ax.axhline(5.0, color='gray', linestyle=':', alpha=0.7, linewidth=1.5, label=r"$Z = 5\sigma$")
 
-        ax.set_title(pair_latex.get(pair, pair))
+        ax.set_title(format_model_label(pair))
         
-        # Apply y-axis label to the leftmost panel (or to all if shareY is disabled)
         if j == 0 or not shareY:
             ax.set_ylabel(r"Separation Significance $Z$")
 
         ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
         
-        # --------------------------------------------------------
-        # Y-Axis Formatting
-        # --------------------------------------------------------
-        ax.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
+        #ax.yaxis.set_major_locator(MaxNLocator(nbins=4, min_n_ticks=3))
         ax.set_ylim(bottom=0) 
-
         beautify_axis(ax, grid=True) 
 
     handles, labels_ = axes[-1].get_legend_handles_labels()
     by_label = dict(zip(labels_, handles))
 
     fig.legend(by_label.values(), by_label.keys(), loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.08))
-
-    fig.suptitle(method_name, fontsize=16, y=1.18)
+    fig.suptitle(method_name + f' [Fake Data Baseline: {format_model_label(fake_model)}]' , fontsize=16, y=1.18)
 
     if outfile:
         fig.savefig(outfile, bbox_inches="tight")
@@ -623,10 +599,7 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
 def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None):
     """
     Plots the Improvement Ratio (Z_falloff / Z_shape) across different m_cuts.
-    Used to visually determine mass regions where the Falloff method outperforms Standard counting.
     """
-    pair_colors = {"Scalar vs VLF": "#1f77b4", "Scalar vs Zprime": "#2ca02c", "VLF vs Zprime": "#d62728"}
-    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
     eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
     
     pairs = list(results["pair"].unique())
@@ -635,7 +608,7 @@ def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None):
     fig, axes = plt.subplots(1, len(pairs), figsize=(5.2 * len(pairs), 4.8), sharey=True)
     if len(pairs) == 1: axes = [axes]
 
-    for ax, pair in zip(axes, pairs):
+    for j, (ax, pair) in enumerate(zip(axes, pairs)):
         sub_pair = results[results["pair"] == pair].sort_values("mcut")
         
         for eps in eps_values:
@@ -643,20 +616,17 @@ def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None):
             sh_col = f"Z_sh_eps_{int(100*eps):02d}"
             if fa_col not in sub_pair.columns or sh_col not in sub_pair.columns: continue
             
-            # Safely calculate the improvement ratio using np.where to prevent division-by-zero
             with np.errstate(divide='ignore', invalid='ignore'):
                 ratio = np.where(sub_pair[sh_col] > 0, sub_pair[fa_col] / sub_pair[sh_col], np.nan)
             
             ls, mk = eps_styles.get(eps, ('-', 'o'))
-            color = pair_colors.get(pair, "black")
             
+            # Auto-assign colors sequentially
             ax.plot(sub_pair["mcut"], ratio, linestyle=ls, marker=mk,
-                    color=color, label=rf"${int(100*eps)}\%$ syst.")
+                    color=plt.cm.tab10(j), label=rf"${int(100*eps)}\%$ syst.")
 
-        # Add a baseline reference at 1.0 representing equal performance between methods
         ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0)
-        
-        ax.set_title(pair_latex.get(pair, pair))
+        ax.set_title(format_model_label(pair))
         ax.set_xlabel(rf"$m_{{t\bar t}}^{{\min}}$ [$m_{{t\bar t}}^{{\max}}={upper_lim}$] [GeV]")
         beautify_axis(ax, grid=True)
 
@@ -672,8 +642,6 @@ def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None):
     """
     Plots the Improvement Ratio (Z_falloff / Z_shape) across different luminosities.
     """
-    pair_colors = {"Scalar vs VLF": "#1f77b4", "Scalar vs Zprime": "#2ca02c", "VLF vs Zprime": "#d62728"}
-    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
     eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
     
     pairs = list(results["pair"].unique())
@@ -681,7 +649,7 @@ def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None):
     fig, axes = plt.subplots(1, len(pairs), figsize=(5.2 * len(pairs), 4.8), sharey=True)
     if len(pairs) == 1: axes = [axes]
 
-    for ax, pair in zip(axes, pairs):
+    for j, (ax, pair) in enumerate(zip(axes, pairs)):
         sub_pair = results[results["pair"] == pair].sort_values("lumi")
         
         for eps in eps_values:
@@ -689,20 +657,16 @@ def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None):
             sh_col = f"Z_sh_eps_{int(100*eps):02d}"
             if fa_col not in sub_pair.columns or sh_col not in sub_pair.columns: continue
             
-            # Safely calculate the improvement ratio using np.where to prevent division-by-zero
             with np.errstate(divide='ignore', invalid='ignore'):
                 ratio = np.where(sub_pair[sh_col] > 0, sub_pair[fa_col] / sub_pair[sh_col], np.nan)
             
             ls, mk = eps_styles.get(eps, ('-', 'o'))
-            color = pair_colors.get(pair, "black")
             
             ax.plot(sub_pair["lumi"], ratio, linestyle=ls, marker=mk,
-                    color=color, label=rf"${int(100*eps)}\%$ syst.")
+                    color=plt.cm.tab10(j), label=rf"${int(100*eps)}\%$ syst.")
 
-        # Add a baseline reference at 1.0 representing equal performance between methods
         ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0)
-        
-        ax.set_title(pair_latex.get(pair, pair))
+        ax.set_title(format_model_label(pair))
         ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
         beautify_axis(ax, grid=True)
 
