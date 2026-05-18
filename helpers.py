@@ -342,7 +342,7 @@ def format_model_label(model_name):
 # Optimized Mass & Luminosity Scans
 # ============================================================
 
-def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0):
+def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = True):
     """
     Executes an ultra-fast luminosity scan.
     Explicitly tests every other model against the 'fake_model' acting as the Asimov dataset.
@@ -384,8 +384,12 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
         if lab not in raw_templates: continue
         
         # Align BSM model yield perfectly to the Fake Data baseline at this cut level
-        aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
-        scaled_templates[lab] = aligned_sig + h_sm_raw
+        if sig_norm:
+          aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
+          scaled_templates[lab] = aligned_sig + h_sm_raw
+        else:
+          aligned_sig = raw_templates[lab] 
+          scaled_templates[lab] = aligned_sig 
         
         delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
         norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
@@ -421,7 +425,7 @@ def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_wid
     return pd.DataFrame(rows)
 
 
-def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_target, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0):
+def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_target, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = True):
     """
     Executes an ultra-fast mass cut scan.
     Explicitly tests every other model against the 'fake_model' acting as the Asimov dataset.
@@ -451,8 +455,12 @@ def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_
     ref_template = raw_templates[fake_model].copy()
     for lab in labels:
         if lab not in raw_templates: continue
-        aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
-        raw_templates[lab] = aligned_sig + n_sm 
+        if sig_norm:
+          aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
+          raw_templates[lab] = aligned_sig + n_sm
+        else:
+          aligned_sig =  raw_templates[lab] * L_target * 1000.0
+          raw_templates[lab] = aligned_sig + n_sm
 
     # Array-Slicing Scan Loop
     for mcut in mcuts:
