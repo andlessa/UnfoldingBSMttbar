@@ -453,7 +453,7 @@ def get_mass_label_from_fits(model_name, best_fits):
 # Optimized Mass & Luminosity Scans
 # ============================================================
 
-def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = Fasle):
+def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = False):
     sm_x, sm_w = sm_data["x"], sm_data["w"]
     sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
     sm_x_tail, sm_w_tail = sm_x[sm_mask], sm_w[sm_mask]
