@@ -428,6 +428,7 @@ def get_best_pair_and_cut(df, N=100000):
 
 def format_model_label(model_name):
     formatted = model_name.replace("Zprime", r"$Z^\prime$")
+    formatted = formatted.replace("_20pcW", r" $(\Gamma_{Z^\prime}/m_{Z^\prime} = 0.2)$")
     formatted = formatted.replace("FakeData", "Fake Data")
     return formatted
 
@@ -673,6 +674,7 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
             color, ls = syst_styles.get(eps_syst, ("black", "-"))
             label = "stat. only" if eps_syst == 0 else rf"{int(100*eps_syst)}\% syst."
             ax.plot(sub["lumi"], sub[col], marker="o", color=color, linestyle=ls, label=label)
+            if eps_syst == 0 and sub[col].iloc[-1] >= 10: ax.set_ylim([0,12])
 
         ax.axhline(3.0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5, label=r"$Z = 3\sigma$")
         ax.axhline(5.0, color='gray', linestyle=':', alpha=0.7, linewidth=1.5, label=r"$Z = 5\sigma$")
@@ -689,7 +691,7 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
             ax.set_ylabel(r"Separation Significance $Z$")
 
         ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
-        ax.set_ylim(bottom=0) 
+        
         beautify_axis(ax, grid=True) 
 
     # Bulletproof Spacing
@@ -912,7 +914,7 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
                 results[model][sys_err].append(Z_score)
 
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5.5), sharey=False)
+    fig, axes = plt.subplots(1, len(target_models), figsize=(16, 5.5), sharey=False)
     
     style_map = {
         0.0:  {'c': 'black',   'ls': '-',  'lbl': 'stat. only'},
@@ -939,6 +941,7 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
         ax.set_title(title_str, fontsize=15, pad=10)
         ax.set_xlabel(r'Integrated Luminosity $\mathcal{L}$ [fb$^{-1}$]', fontsize=14, labelpad=8)
         ax.set_ylabel(r'Separation Significance $Z$', fontsize=14)
+        if results[model][0.0][-1] >= 10: ax.set_ylim([0,12])
         
         ax.grid(True, alpha=0.3)
         ax.spines['top'].set_visible(False)
