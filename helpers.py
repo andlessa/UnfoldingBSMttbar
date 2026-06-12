@@ -429,6 +429,7 @@ def get_best_pair_and_cut(df, N=100000):
 def format_model_label(model_name):
     formatted = model_name.replace("Zprime", r"$Z^\prime$")
     formatted = formatted.replace("_20pcW", r" $(\Gamma_{Z^\prime}/m_{Z^\prime} = 0.2)$")
+    formatted = formatted.replace("_20pc", r" $(\Gamma_{Z^\prime}/m_{Z^\prime} = 0.2)$")
     formatted = formatted.replace("FakeData", "Fake Data")
     return formatted
 
