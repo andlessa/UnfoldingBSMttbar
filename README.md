@@ -18,5 +18,5 @@ Below we describe the folders stored in this repository.
 
 ## Running the notebook with the SM + Signal events generated together (./DiscriminantTTBAR_SMpSignal.ipynb)
 
-* The LHE's, banners and summary (for NLO processes) are contained in this folder: https://drive.google.com/drive/folders/1yhO0nnLoKQMObY363I5-XoGXUcU8O4LZ?usp=sharing . You will only need to download the folder and change the path to the models in the notebook. In the colab you can save this folder in your drive and load from it. 
+* The LHE's, banners and summary (for NLO processes) are contained in this folder: https://drive.google.com/drive/folders/1na4V1nLlieIT-z8OPvJhFGeb8mepP93h?usp=sharing . You will only need to download the folder and change the path to the models in the notebook. In the colab you can save this folder in your drive and load from it. 
 	
