@@ -1,7 +1,9 @@
 """
 helpers.py
 
-Useful functions for calculations and plotting
+A comprehensive module for Monte Carlo (MC) data management, kinematic calculations, 
+statistical template analysis (Shape and Falloff methods), and significance plotting 
+for Beyond the Standard Model (BSM) physics searches.
 """
 
 import os
@@ -15,6 +17,8 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 import tempfile
 import pylhe
+import gc
+from scipy.optimize import minimize
 
 SQRT_S = 13000.0  # Center of mass energy in GeV
 
@@ -25,8 +29,12 @@ SQRT_S = 13000.0  # Center of mass energy in GeV
 def download_data_files(base_url, files_dict, out_dir="data"):
     """
     Checks the local directory for the specified dataset files. 
-    If a file is missing, it is downloaded from the designated remote 
-    repository (e.g., GitHub raw content).
+    If a file is missing, it is downloaded from the designated remote repository.
+    
+    Args:
+        base_url (str): The root URL for the remote repository.
+        files_dict (dict): Dictionary mapping file names to their full download URLs.
+        out_dir (str): Local directory path to save the downloaded .lhe.gz files.
     """
     os.makedirs(out_dir, exist_ok=True)
     for name, url in files_dict.items():
@@ -37,11 +45,19 @@ def download_data_files(base_url, files_dict, out_dir="data"):
         else:
             print(f"{out} already exists")
 
+
 def load_model_data(base_path, model_name, rescale=1.0):
     """
-    Aggregates all .npz simulation files corresponding to a specific 
-    physics model, applies a universal weight rescaling factor (for 
-    coupling adjustments), and returns a consolidated Pandas DataFrame.
+    Aggregates all .npz simulation files corresponding to a specific physics model, 
+    applies a universal weight rescaling factor, and returns a Pandas DataFrame.
+    
+    Args:
+        base_path (str): The directory containing the .npz files.
+        model_name (str): The specific model substring to search for in filenames.
+        rescale (float): A universal multiplier applied to all event weights.
+        
+    Returns:
+        pd.DataFrame: A consolidated DataFrame with 'm_tt', 'weight', and 'label' columns.
     """
     file_pattern = f"{base_path}/*{model_name}*.npz"
     files = glob.glob(file_pattern)
@@ -59,6 +75,321 @@ def load_model_data(base_path, model_name, rescale=1.0):
     df = pd.DataFrame({'m_tt': np.concatenate(mtt_list), 'weight': np.concatenate(w_list)})
     df['label'] = model_name
     return df
+
+
+# ============================================================
+# Automated Configuration, Best Fit & Loading Module
+# ============================================================
+
+def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_dir='./drive/MyDrive/Distributions', zp_limit_csv='Safe_Limits_Zprime.csv'):
+    """
+    Scans BSM mass points, performs Chi-squared minimization to fit model signal 
+    strengths to a provided Fake Data target, and builds analysis-ready DataFrames.
+    
+    This function handles the heavy lifting of reading the raw `.npz` files, normalizing 
+    the Fake Data to match safe cross-section limits, optimizing the coupling 
+    constants (mu), and assembling the final weighted Pandas DataFrames for each 
+    requested systematic error baseline.
+    
+    Args:
+        fake_data_files (list): File paths to the .npz files acting as pseudo-data.
+        sys_err_list (list): Fractional systematic errors to evaluate (e.g., [0.0, 0.05]).
+        lumi (float): Target integrated luminosity in fb^-1.
+        base_dir (str): Root directory containing the MC distribution files.
+        zp_limit_csv (str): Path to the CSV containing upper limits on Z' cross sections.
+        
+    Returns:
+        dict: A nested dictionary mapping each systematic error to its corresponding 
+              assembled BSM DataFrame, SM DataFrame, and best-fit parameters.
+    """
+    if sys_err_list is None or len(sys_err_list) == 0:
+        sys_err_list = [0.0]
+
+    # Pre-discover baseline Standard Model files
+    sm_files = list(glob.glob(f'{base_dir}/SM/pp2ttbar/bias_article*/*.npz'))
+    
+    # Load safe cross-section limits to establish the Fake Data target yield
+    zp_limit = pd.read_csv(zp_limit_csv)
+    S_tt_dict = dict(zip(zp_limit['mZp_GeV'], zp_limit['S_tt_pb']))
+    
+    # Establish baseline target using the 3.2 TeV Z' limit backed off by 5%
+    zp_mass = 3200
+    target_xsec = S_tt_dict[zp_mass] * 0.95
+    target_yield = target_xsec * lumi * 1000.0
+
+    # Define the kinematic binning and the invariant mass window for the fit (1.5 - 5.0 TeV)
+    bins = np.arange(800., 5600., 100.)
+    mass_mask = (bins[:-1] >= 1500) & (bins[:-1] <= 5000)
+
+    # --------------------------------------------------------
+    # 1. Build and Normalize Baselines (Fake Data & SM)
+    # --------------------------------------------------------
+    n_fake = np.zeros(len(bins)-1, dtype=np.float64)
+    for f in fake_data_files:
+        d = np.load(f, allow_pickle=True)
+        h_fake, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+        n_fake += h_fake * lumi * 1000.0
+
+    # Normalize the generated Fake Data inside the specific mass mask to hit the target yield exactly
+    factor = target_yield / np.sum(n_fake[mass_mask]) if np.sum(n_fake[mass_mask]) > 0 else 1.0
+    n_fake = n_fake * factor
+    print(f"Fake Data correctly normalized to yield: {np.sum(n_fake[mass_mask], dtype=np.float64):.2f} events in target window.")
+
+    # Aggregate SM backgrounds
+    n_sm = np.zeros(len(bins)-1, dtype=np.float64)
+    for f in sm_files:
+        d = np.load(f, allow_pickle=True)
+        h_sm, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+        n_sm += h_sm * lumi * 1000.0
+    if len(sm_files) > 0:
+        n_sm = n_sm / len(sm_files)
+
+    def find_best_mu(n_sig_template, n_fake_data, denom):
+        """Minimizes Chi-squared to find the optimal signal scaling factor (mu)."""
+        def objective(mu):
+            return np.sum(((mu * n_sig_template - n_fake_data)**2) / denom, dtype=np.float64)
+        # bounds=[(0.0, None)] ensures the signal strength physically cannot be negative
+        res = minimize(objective, x0=[8.0], bounds=[(0.0, None)])
+        return res.x[0], res.fun
+
+    masses_vlf_scalar = np.arange(1000., 3100., 100.)
+    masses_zp = np.arange(1000., 4600., 100.)
+    output_dict = {}
+
+    # --------------------------------------------------------
+    # 2. Iterate through each Requested Systematic Error
+    # --------------------------------------------------------
+    for sys_err in sys_err_list:
+        print(f"\n============================================================")
+        print(f" Fitting for Systematic Error: {sys_err*100:.1f}%")
+        print(f"============================================================")
+        
+        # Denominator for Chi2 includes statistical uncertainty + systematic variance on SM background
+        chi2_denom_masked = (n_fake + n_sm) + (sys_err * n_sm)**2
+
+        # Trackers for the absolute global minimums: (Mass, minimum_chi2, best_coupling)
+        chi2_min = {
+            'VLF': (None, np.inf, 0.),
+            'Scalar': (None, np.inf, 0.),
+            'Zprime': (None, np.inf, 0.),
+            'Zprime_20pc': (None, np.inf, 0.),
+            'FakeData': (1000.0, 0.0, np.sqrt(factor))
+        }
+
+        # --- VLF Mass Scan ---
+        for m in masses_vlf_scalar:
+            scan_files = glob.glob(f'{base_dir}/VLF/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
+            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files:
+                d = np.load(f, allow_pickle=True)
+                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                n_sig += h * lumi * 1000.0
+            if np.sum(n_sig) == 0: continue
+            
+            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
+            
+            # Filter unphysical couplings (yDM^4 = mu, so yDM = sqrt(mu))
+            if np.sqrt(best_mu) >= 7.0: continue
+            if chi2_val < chi2_min['VLF'][1]: chi2_min['VLF'] = (m, chi2_val, np.sqrt(best_mu))
+
+        # --- Scalar Mass Scan ---
+        for m in masses_vlf_scalar:
+            scan_files = glob.glob(f'{base_dir}/Scalar/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
+            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files:
+                d = np.load(f, allow_pickle=True)
+                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                n_sig += h * lumi * 1000.0
+            if np.sum(n_sig) == 0: continue
+            
+            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
+            if np.sqrt(best_mu) >= 10.1: continue
+            if chi2_val < chi2_min['Scalar'][1]: chi2_min['Scalar'] = (m, chi2_val, np.sqrt(best_mu))
+
+        # --- Zprime Mass Scan ---
+        for m in masses_zp:
+            scan_files = glob.glob(f'{base_dir}/Zprime/mass_scan/mZp_{m:.0f}.npz')
+            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files:
+                d = np.load(f, allow_pickle=True)
+                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                n_sig += h * lumi * 1000.0
+            if np.sum(n_sig) == 0: continue
+            
+            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
+            if chi2_val < chi2_min['Zprime'][1]: chi2_min['Zprime'] = (m, chi2_val, np.sqrt(best_mu))
+
+        # --- Zprime 20% Width Mass Scan ---
+        for m in masses_zp:
+            scan_files = glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{m:.0f}.npz')
+            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files:
+                d = np.load(f, allow_pickle=True)
+                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                n_sig += h * lumi * 1000.0
+            if np.sum(n_sig) == 0: continue
+            
+            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
+            if chi2_val < chi2_min['Zprime_20pc'][1]: chi2_min['Zprime_20pc'] = (m, chi2_val, np.sqrt(best_mu))
+
+        print(f"--- Global Best Fit Results (sys_err = {sys_err}) ---")
+        for model, fit in chi2_min.items():
+            mass, chi2, best_mu = fit
+            if mass is not None:
+                print(f"{model:12}: Mass = {mass:.0f} GeV | Scaling factor = {best_mu:.6e} | Min Chi^2 = {chi2:.2f}")
+
+        # Assemble the dictionary of best-fit configurations for DataFrame extraction
+        best_fits = {
+            'VLF':    {'mPsiT': chi2_min['VLF'][0], 'mSDM': chi2_min['VLF'][0]-100., 'scale_factor': chi2_min['VLF'][2]},
+            'Scalar': {'mST': chi2_min['Scalar'][0], 'mChi': chi2_min['Scalar'][0]-100., 'scale_factor': chi2_min['Scalar'][2]},
+            'Zprime': {'mZp': chi2_min['Zprime'][0], 'scale_factor': chi2_min['Zprime'][2]},
+            'Zprime_20pc': {'mZp': chi2_min['Zprime_20pc'][0], 'scale_factor': chi2_min['Zprime_20pc'][2]},
+            'FakeData': {'scale_factor': chi2_min['FakeData'][2]}
+        }
+
+        # Select the specific .npz files that represent the global minimum for each model
+        vlf_files = (
+            list(glob.glob(f'{base_dir}/VLF/qq2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["VLF"]["mPsiT"]:.0f}_mSDM_{best_fits["VLF"]["mSDM"]:.0f}.npz')) +
+            list(glob.glob(f'{base_dir}/VLF/gg2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["VLF"]["mPsiT"]:.0f}_mSDM_{best_fits["VLF"]["mSDM"]:.0f}.npz'))
+        )
+        scalar_files = (
+            list(glob.glob(f'{base_dir}/Scalar/qq2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["Scalar"]["mST"]:.0f}_mSDM_{best_fits["Scalar"]["mChi"]:.0f}.npz')) +
+            list(glob.glob(f'{base_dir}/Scalar/gg2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["Scalar"]["mST"]:.0f}_mSDM_{best_fits["Scalar"]["mChi"]:.0f}.npz'))
+        )
+        zp_files = list(glob.glob(f'{base_dir}/Zprime/mass_scan/mZp_{best_fits["Zprime"]["mZp"]:.0f}.npz'))
+        zp_20pc_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
+
+        # --------------------------------------------------------
+        # 3. High-Performance NumPy Data Extraction
+        # --------------------------------------------------------
+        KEYS_TO_SUM = ['xsec (pb)', 'n_events']
+        KEYS_TO_KEEP = ['mTT', 'weights', 'pT']
+
+        raw_data = {
+            'FakeData':    {'arrays': {}, 'scalars': {}}, 'Scalar':      {'arrays': {}, 'scalars': {}},
+            'VLF':         {'arrays': {}, 'scalars': {}}, 'Zprime':      {'arrays': {}, 'scalars': {}},
+            'Zprime_20pc': {'arrays': {}, 'scalars': {}}, 'SM':          {'arrays': {}, 'scalars': {}}
+        }
+
+        all_target_files = vlf_files + scalar_files + zp_files + zp_20pc_files + sm_files + fake_data_files
+        
+        # Stream files sequentially to prevent RAM overflow
+        for f in all_target_files:
+            aux = np.load(f, allow_pickle=True)
+            model_name = aux['model']
+            
+            # Sanitize numpy string encodings
+            if isinstance(model_name, np.ndarray):
+                model_name = model_name.item() if model_name.size == 1 else model_name[0]
+            if isinstance(model_name, bytes):
+                model_name = model_name.decode('utf-8')
+
+            # Route the file data to the correct model container
+            targets = []
+            if f in fake_data_files: targets.append(raw_data['FakeData'])
+            if model_name == '1-loop VLF' and f in vlf_files: targets.append(raw_data['VLF'])
+            elif model_name == '1-loop Scalar' and f in scalar_files: targets.append(raw_data['Scalar'])
+            elif model_name == 'Z prime' and f in zp_files: targets.append(raw_data['Zprime'])
+            elif model_name == 'Z prime' and f in zp_20pc_files: targets.append(raw_data['Zprime_20pc'])
+            elif model_name == 'SM' and f in sm_files: targets.append(raw_data['SM'])
+
+            if not targets:
+                aux.close()
+                continue
+
+            # Extract arrays and sum macroscopic scalars
+            for target in targets:
+                for key in aux.files:
+                    val = aux[key]
+                    if key in KEYS_TO_SUM:
+                        if key not in target['scalars']: target['scalars'][key] = 0.0
+                        target['scalars'][key] += float(val.item())
+                    elif val.ndim == 0 or val.size == 1:
+                        if not isinstance(val.item(), dict):
+                            target['scalars'][key] = val.item()
+                    else:
+                        if key not in KEYS_TO_KEEP: continue
+                        if key not in target['arrays']: target['arrays'][key] = []
+                        target['arrays'][key].append(val[:])
+            aux.close()
+
+        # Concatenate arrays for each model
+        for model in raw_data:
+            for key, list_of_arrays in raw_data[model]['arrays'].items():
+                if list_of_arrays:
+                    raw_data[model]['arrays'][key] = np.concatenate(list_of_arrays, axis=0)
+
+        # Average weights across SM files to maintain correct physical yield
+        sm_file_count = len(sm_files)
+        if sm_file_count > 0 and 'weights' in raw_data['SM']['arrays']:
+            raw_data['SM']['arrays']['weights'] = raw_data['SM']['arrays']['weights'].astype(np.float64) / sm_file_count
+
+        # --------------------------------------------------------
+        # 4. Apply Final Scalings & Construct DataFrames
+        # --------------------------------------------------------
+        for model_name, data in raw_data.items():
+            arrs = data['arrays']
+            if not arrs: continue
+            
+            if 'weights' in arrs:
+                arrs['weights'] = arrs['weights'].astype(np.float64)
+
+            # Apply the squared best-fit coupling to the event weights
+            if model_name in ['FakeData', 'VLF', 'Scalar', 'Zprime', 'Zprime_20pc']:
+                fac = np.float64(best_fits.get(model_name, {}).get('scale_factor', 1.0))
+                fac_sq = fac ** 2
+                if fac_sq != 1.0 and 'weights' in arrs:
+                    arrs['weights'] = arrs['weights'] * fac_sq
+
+            # Standardize column naming conventions
+            if 'weights' in arrs: arrs['weight'] = arrs.pop('weights')
+            if 'mTT' in arrs:     arrs['m_tt'] = arrs.pop('mTT')
+
+        l_fake = len(raw_data['FakeData']['arrays'].get('weight', []))
+        l_s    = len(raw_data['Scalar']['arrays'].get('weight', []))
+        l_v    = len(raw_data['VLF']['arrays'].get('weight', []))
+        l_z    = len(raw_data['Zprime']['arrays'].get('weight', []))
+        l_z20  = len(raw_data['Zprime_20pc']['arrays'].get('weight', []))
+
+        final_dict = {}
+        labels_list = []
+        if l_fake > 0: labels_list.append(np.full(l_fake, 'FakeData'))
+        if l_s > 0:    labels_list.append(np.full(l_s, 'Scalar'))
+        if l_v > 0:    labels_list.append(np.full(l_v, 'VLF'))
+        if l_z > 0:    labels_list.append(np.full(l_z, 'Zprime'))
+        if l_z20 > 0:  labels_list.append(np.full(l_z20, 'Zprime_20pc'))
+
+        if labels_list:
+            final_dict['label'] = np.concatenate(labels_list)
+
+        keys_to_stack = list(raw_data['SM']['arrays'].keys())
+        for key in keys_to_stack:
+            arrs_to_concat = []
+            if l_fake > 0 and key in raw_data['FakeData']['arrays']:    arrs_to_concat.append(raw_data['FakeData']['arrays'][key])
+            if l_s > 0 and key in raw_data['Scalar']['arrays']:         arrs_to_concat.append(raw_data['Scalar']['arrays'][key])
+            if l_v > 0 and key in raw_data['VLF']['arrays']:            arrs_to_concat.append(raw_data['VLF']['arrays'][key])
+            if l_z > 0 and key in raw_data['Zprime']['arrays']:         arrs_to_concat.append(raw_data['Zprime']['arrays'][key])
+            if l_z20 > 0 and key in raw_data['Zprime_20pc']['arrays']:  arrs_to_concat.append(raw_data['Zprime_20pc']['arrays'][key])
+            if arrs_to_concat:
+                final_dict[key] = np.concatenate(arrs_to_concat, axis=0)
+
+        df_bsm = pd.DataFrame(final_dict)
+        df_sm = pd.DataFrame(raw_data['SM']['arrays'])
+        if not df_sm.empty:
+            df_sm['label'] = 'SM'
+
+        output_dict[sys_err] = {
+            'df_bsm': df_bsm,
+            'df_sm': df_sm,
+            'best_fits': best_fits
+        }
+
+        # Clear massive dictionaries from memory explicitly between systematic iterations
+        del raw_data, final_dict, labels_list
+        gc.collect()
+
+    return output_dict
+
 
 # ============================================================
 # Kinematics & Parsing
@@ -306,11 +637,13 @@ def load_lhe_with_corrections(file_pattern, label=None, is_nlo=False, custom_res
         
     return pd.concat(df_list, ignore_index=True)
 
+
 # ============================================================
 # Histogram & Template Operations
 # ============================================================
 
 def class_normalized_weights(df, label_col="label", weight_col="weight"):
+    """Normalizes the weights inside a dataframe independently for each model class."""
     w = df[weight_col].astype(float).copy()
     out = np.zeros(len(df), dtype=float)
     for lab in df[label_col].unique():
@@ -320,56 +653,71 @@ def class_normalized_weights(df, label_col="label", weight_col="weight"):
     return out
 
 def event_number_normalization(h_ref, h, lum=500.0):
+    """Rescales histogram yields to explicitly match a target expected luminosity yield."""
     n_ref, n = lum * np.asarray(h_ref, dtype=float) * 1000.0, lum * np.asarray(h, dtype=float) * 1000.0
     return n * sum(n_ref)/sum(n) if sum(n) != 0 else n
 
 def weighted_hist(x, w, bins):
+    """Computes a 1D histogram weighted by generated event parameters."""
     h, _ = np.histogram(x, bins=bins, weights=w)
     return h.astype(float)
 
 def build_template(x, w, bins, alpha=1e-12, density=False):
+    """Constructs a basic probability template preventing absolute 0 division errors."""
     h, _ = np.histogram(x, bins=bins, weights=w)
     h = h.astype(float) + alpha
     if density: h /= h.sum()
     return h
 
 def build_shape_template(h, alpha=1e-12):
+    """Returns a completely normalized unit-shape template from raw yields."""
     h_shape = h + alpha
     return h_shape / h_shape.sum()
 
 def build_signed_delta(h_hyp, h_sm, alpha=1e-12):
+    """Calculates the relative variance between a hypothesis template and SM."""
     return (h_hyp - h_sm) / (h_sm + alpha)
 
 def normalize_signed_template(delta, alpha=1e-12):
+    """Normalizes a signed delta distribution, maintaining its interference bounds."""
     norm = np.sum(np.abs(delta))
     return delta / norm if norm > alpha else None
 
 def js_divergence(p, q, eps=1e-12):
+    """Computes Jensen-Shannon divergence between two templates."""
     p, q = np.asarray(p, dtype=float) + eps, np.asarray(q, dtype=float) + eps
     p, q = p / p.sum(), q / q.sum()
     m = 0.5 * (p + q)
     return 0.5 * np.sum(p * np.log(p / m)) + 0.5 * np.sum(q * np.log(q / m))
 
 def kl_divergence(p, q, eps=1e-12):
+    """Computes standard Kullback-Leibler divergence between two templates."""
     p, q = np.asarray(p, dtype=float) + eps, np.asarray(q, dtype=float) + eps
     p, q = p / p.sum(), q / q.sum()
     return np.sum(p * np.log(p / q))
 
 def signed_l2_distance(d1, d2):
+    """Computes L2 distance between shape differentials."""
     return np.sqrt(np.mean((d1 - d2)**2))
 
 def asimov_shape_llr_stat_only(p_true, p_test, N=10000, eps=1e-12):
+    """Calculates the asymptotic Log-Likelihood Ratio based entirely on statistical variations."""
     p_true, p_test = np.asarray(p_true, dtype=float) + eps, np.asarray(p_test, dtype=float) + eps
     p_true, p_test = p_true / p_true.sum(), p_test / p_test.sum()
     n = N * p_true
     q = 2.0 * np.sum(n * np.log(p_true / p_test))
     return q, np.sqrt(max(q, 0.0))
 
+
 # ============================================================
 # Variance and Significance Calculations
 # ============================================================
 
 def calc_variance_hat_delta(h_hyp, h_sm, eps, alpha=1e-12):
+    """
+    Computes the variance operator of the delta interference ratio incorporating 
+    both statistical and systematic uncertainties in the denominator base.
+    """
     n_hyp = h_hyp
     n_sm = h_sm
     delta = (n_hyp - n_sm) / (n_sm + alpha)
@@ -385,6 +733,10 @@ def calc_variance_hat_delta(h_hyp, h_sm, eps, alpha=1e-12):
     return term_same + term_diff
 
 def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, mode="avg", alpha=1e-12):
+    """
+    Calculates the separation significance (Z) using the Normalized Falloff Method.
+    This formulation accounts for signed (interference) distributions.
+    """
     var_hat_A = calc_variance_hat_delta(hA, n_sm, eps, alpha=alpha)
     var_hat_B = calc_variance_hat_delta(hB, n_sm, eps, alpha=alpha)
     
@@ -396,6 +748,10 @@ def asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, mode="avg", alpha=1e-12)
     return np.sqrt(max(np.sum(num / den), 0.0)), num, den
 
 def asimov_shape_Z_with_syst(p_true, p_test, frac_syst=0.05, mode="avg", eps=1e-12):
+    """
+    Calculates the separation significance (Z) using the Standard Shape Method.
+    Implements a strict relative fraction systematic on the reference baseline bins.
+    """
     p_true = np.asarray(p_true, dtype=float) + eps
     p_test = np.asarray(p_test, dtype=float) + eps
 
@@ -407,17 +763,20 @@ def asimov_shape_Z_with_syst(p_true, p_test, frac_syst=0.05, mode="avg", eps=1e-
     
     return np.sqrt(max(np.sum(num / var), 0.0)), num, var
 
+
 # ============================================================
 # Plotting Utilities
 # ============================================================
 
 def beautify_axis(ax, grid=False):
+    """Applies standard aesthetic adjustments to Matplotlib axes (despining)."""
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.tick_params(direction="in", top=False, right=False, length=5)
     if grid: ax.grid(True, alpha=0.22, linewidth=0.7)
 
 def get_best_pair_and_cut(df, N=100000):
+    """Extracts the specific mass cut value that yields the maximum separation Z-score."""
     col = df.columns[-1]
     for c in [f"Z_{N}_a_true", f"Z_{N}_eps_00", f"Z_{N}_eps_02", "Z_eps_00", "Z_eps_02", "Z_shape"]:
         if c in df.columns:
@@ -427,6 +786,7 @@ def get_best_pair_and_cut(df, N=100000):
     return row["pair"], int(row["mcut"])
 
 def format_model_label(model_name):
+    """Formats raw model dataset names into presentation-ready LaTeX strings."""
     formatted = model_name.replace("Zprime", r"$Z^\prime$")
     formatted = formatted.replace("_20pcW", r" $(\Gamma_{Z^\prime}/m_{Z^\prime} = 0.2)$")
     formatted = formatted.replace("_20pc", r" $(\Gamma_{Z^\prime}/m_{Z^\prime} = 0.2)$")
@@ -436,7 +796,7 @@ def format_model_label(model_name):
 def get_mass_label_from_fits(model_name, best_fits):
     """
     Parses the best_fits dictionary and returns the properly formatted LaTeX 
-    string containing the model masses.
+    string containing the respective internal masses for the requested model.
     """
     if not best_fits or model_name not in best_fits:
         return ""
@@ -451,148 +811,161 @@ def get_mass_label_from_fits(model_name, best_fits):
     
     return ""
 
+
+
+
 # ============================================================
-# Optimized Mass & Luminosity Scans
+# Optimized Mass & Luminosity Scans (Adapted for Dictionary Routing)
 # ============================================================
 
-def run_fast_lumi_scan(sm_data, bsm_data, labels, target_mcut, mcut_max, bin_width, lumi_targets, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = False):
-    sm_x, sm_w = sm_data["x"], sm_data["w"]
-    sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
-    sm_x_tail, sm_w_tail = sm_x[sm_mask], sm_w[sm_mask]
-    
-    if len(sm_x_tail) == 0:
-        print(f"Warning: 0 SM events found above {target_mcut} GeV.")
-        return pd.DataFrame()
-
+def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_width, lumi_targets, sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm=False):
+    """
+    Computes Standard Shape and Normalized Falloff method separation significances 
+    across varying projected luminosities using the correctly fitted baseline per systematic error.
+    """
+    rows_dict = {} 
     bins = np.arange(target_mcut + bin_offset, mcut_max + bin_width, bin_width)
-    h_sm_raw = weighted_hist(sm_x_tail, sm_w_tail, bins)
 
-    raw_templates = {}
-    for lab in labels:
-        if lab not in bsm_data: continue
+    for sys_err in sys_err_list:
+        # Fallback strictly to 0.0 systematics if none other are supplied inside the dictionary
+        active_sys_key = sys_err if sys_err in fitted_data_dict else 0.0
         
-        lab_x, lab_w = bsm_data[lab]["x"], bsm_data[lab]["w"]
-        hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
-        if np.sum(hyp_mask) == 0: continue
+        df_sm = fitted_data_dict[active_sys_key]['df_sm']
+        df_bsm = fitted_data_dict[active_sys_key]['df_bsm']
+
+        sm_x, sm_w = df_sm[var].values, df_sm['weight'].values
+        sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
         
-        raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
-
-    if fake_model not in raw_templates:
-        print(f"Error: fake_model '{fake_model}' not found in data.")
-        return pd.DataFrame()
-
-    ref_template = raw_templates[fake_model].copy()
-    scaled_templates = {}
-    norm_templates = {}
-    
-    for lab in labels:
-        if lab not in raw_templates: continue
-        
-        if sig_norm:
-          aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
-          scaled_templates[lab] = aligned_sig + h_sm_raw
-        else:
-          aligned_sig = raw_templates[lab] + h_sm_raw
-          scaled_templates[lab] = aligned_sig 
-        
-        delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
-        norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
-
-    rows = []
-    for lum in lumi_targets:
-        n_sm = h_sm_raw * lum * 1000.0
-
-        for lab in labels:
-            if lab not in raw_templates or lab == fake_model:
-                continue 
-
-            a, b = fake_model, lab
+        if np.sum(sm_mask) == 0:
+            print(f"Warning: 0 SM events found above {target_mcut} GeV for systematic {sys_err}.")
+            continue
             
-            hA, hB = scaled_templates[a]*1000.0*lum, scaled_templates[b]*1000.0*lum
-            dA, dB = norm_templates[a], norm_templates[b]
+        h_sm_raw = weighted_hist(sm_x[sm_mask], sm_w[sm_mask], bins)
+
+        raw_templates = {}
+        for lab in labels + [fake_model]:
+            sub = df_bsm[df_bsm['label'] == lab]
+            if sub.empty: continue
             
-            base_row = {"lumi": lum, "pair": f"{a} vs {b}"}
+            lab_x, lab_w = sub[var].values, sub['weight'].values
+            hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
+            if np.sum(hyp_mask) > 0:
+                raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
+
+        if fake_model not in raw_templates: continue
+        ref_template = raw_templates[fake_model].copy()
+
+        for lum in lumi_targets:
+            n_sm = h_sm_raw * lum * 1000.0
             
-            for eps in eps_values:
-                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, eps, mode = "test", alpha = alpha)
-                base_row[f"Z_fa_eps_{int(100*eps):02d}"] = Z_fa
+            scaled_templates = {}
+            norm_templates = {}
+            for lab in labels + [fake_model]:
+                if lab not in raw_templates: continue
                 
-                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="test", eps=alpha)
-                base_row[f"Z_sh_eps_{int(100*eps):02d}"] = Z_sh
+                if sig_norm:
+                    aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
+                    scaled_templates[lab] = aligned_sig + h_sm_raw
+                else:
+                    scaled_templates[lab] = raw_templates[lab] + h_sm_raw
                 
-            rows.append(base_row)
+                delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
+                norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
 
-    return pd.DataFrame(rows)
+            for lab in labels:
+                if lab not in raw_templates or lab == fake_model: continue
+                
+                a, b = fake_model, lab
+                hA, hB = scaled_templates[a] * 1000.0 * lum, scaled_templates[b] * 1000.0 * lum
+                dA, dB = norm_templates[a], norm_templates[b]
+                
+                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, sys_err, mode="test", alpha=alpha)
+                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=sys_err, mode="test", eps=alpha)
+                
+                # Use a dictionary key (lumi, pair) to append multiple sys errors to the same DataFrame row
+                key = (lum, f"{a} vs {b}")
+                if key not in rows_dict:
+                    rows_dict[key] = {"lumi": lum, "pair": f"{a} vs {b}"}
+                
+                rows_dict[key][f"Z_fa_eps_{int(100*sys_err):02d}"] = Z_fa
+                rows_dict[key][f"Z_sh_eps_{int(100*sys_err):02d}"] = Z_sh
+
+    return pd.DataFrame(list(rows_dict.values()))
 
 
-def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_target, eps_values, alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm = False):
-    rows = []
-    
+def run_fast_mcut_scan(fitted_data_dict, labels, mcuts, mcut_max, bin_width, L_target, sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm=False):
+    """
+    Computes Standard Shape and Normalized Falloff method separation significances 
+    by varying the minimum mass cut using the correctly fitted baseline per systematic error.
+    """
+    rows_dict = {}
     mcut_base = mcuts[0]
     bins = np.arange(mcut_base + bin_offset, mcut_max + bin_width, bin_width)
     bin_edges = bins[:-1] 
-    
-    sm_mask = (sm_data["x"] > mcut_base) & (sm_data["x"] <= mcut_max)
-    h_sm_raw = weighted_hist(sm_data["x"][sm_mask], sm_data["w"][sm_mask], bins)
-    n_sm = h_sm_raw * L_target * 1000.0
 
-    raw_templates = {}
-    for lab in labels:
-        if lab not in bsm_data: continue
-        lab_x, lab_w = bsm_data[lab]["x"], bsm_data[lab]["w"]
-        hyp_mask = (lab_x > mcut_base) & (lab_x <= mcut_max)
-        raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
-    
-    if fake_model not in raw_templates:
-        print(f"Error: fake_model '{fake_model}' not found in data.")
-        return pd.DataFrame()
-
-    ref_template = raw_templates[fake_model].copy()
-    for lab in labels:
-        if lab not in raw_templates: continue
-        if sig_norm:
-          aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
-          raw_templates[lab] = aligned_sig + n_sm
-        else:
-          aligned_sig =  raw_templates[lab] * L_target * 1000.0
-          raw_templates[lab] = aligned_sig + n_sm
-
-    for mcut in mcuts:
-        cut_mask = (bin_edges >= mcut) & (bin_edges < mcut_max)
+    for sys_err in sys_err_list:
+        active_sys_key = sys_err if sys_err in fitted_data_dict else 0.0
         
-        if not np.any(cut_mask): continue
+        df_sm = fitted_data_dict[active_sys_key]['df_sm']
+        df_bsm = fitted_data_dict[active_sys_key]['df_bsm']
+        
+        sm_x, sm_w = df_sm[var].values, df_sm['weight'].values
+        sm_mask = (sm_x > mcut_base) & (sm_x <= mcut_max)
+        h_sm_raw = weighted_hist(sm_x[sm_mask], sm_w[sm_mask], bins)
+        n_sm = h_sm_raw * L_target * 1000.0
+
+        raw_templates = {}
+        for lab in labels + [fake_model]:
+            sub = df_bsm[df_bsm['label'] == lab]
+            if sub.empty: continue
             
-        n_sm_cut = n_sm[cut_mask]
+            lab_x, lab_w = sub[var].values, sub['weight'].values
+            hyp_mask = (lab_x > mcut_base) & (lab_x <= mcut_max)
+            if np.sum(hyp_mask) > 0:
+                raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
         
-        norm_templates = {}
-        for lab in labels:
+        if fake_model not in raw_templates: continue
+        ref_template = raw_templates[fake_model].copy()
+        
+        for lab in labels + [fake_model]:
             if lab not in raw_templates: continue
-            h_combined_cut = raw_templates[lab][cut_mask]
-            delta = build_signed_delta(h_combined_cut, n_sm_cut, alpha=alpha)
-            norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
+            if sig_norm:
+                aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=L_target)
+                raw_templates[lab] = aligned_sig + n_sm
+            else:
+                raw_templates[lab] = raw_templates[lab] * L_target * 1000.0 + n_sm
 
-        for lab in labels:
-            if lab not in raw_templates or lab == fake_model: continue
+        for mcut in mcuts:
+            cut_mask = (bin_edges >= mcut) & (bin_edges < mcut_max)
+            if not np.any(cut_mask): continue
             
-            a, b = fake_model, lab
-            hA = raw_templates[a][cut_mask]
-            hB = raw_templates[b][cut_mask]
-            dA, dB = norm_templates[a], norm_templates[b]
+            n_sm_cut = n_sm[cut_mask]
             
-            base_row = {"mcut": mcut, "pair": f"{a} vs {b}"}
-            
-            for eps in eps_values:
-                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm_cut, eps, mode = "test", alpha = alpha)
-                base_row[f"Z_fa_eps_{int(100*eps):02d}"] = Z_fa
+            norm_templates = {}
+            for lab in labels + [fake_model]:
+                if lab not in raw_templates: continue
+                h_combined_cut = raw_templates[lab][cut_mask]
+                delta = build_signed_delta(h_combined_cut, n_sm_cut, alpha=alpha)
+                norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
+
+            for lab in labels:
+                if lab not in raw_templates or lab == fake_model: continue
                 
-                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=eps, mode="test", eps=alpha)
-                base_row[f"Z_sh_eps_{int(100*eps):02d}"] = Z_sh
+                a, b = fake_model, lab
+                hA, hB = raw_templates[a][cut_mask], raw_templates[b][cut_mask]
+                dA, dB = norm_templates[a], norm_templates[b]
                 
-            rows.append(base_row)
+                Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm_cut, sys_err, mode="test", alpha=alpha)
+                Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=sys_err, mode="test", eps=alpha)
+                
+                key = (mcut, f"{a} vs {b}")
+                if key not in rows_dict:
+                    rows_dict[key] = {"mcut": mcut, "pair": f"{a} vs {b}"}
+                
+                rows_dict[key][f"Z_fa_eps_{int(100*sys_err):02d}"] = Z_fa
+                rows_dict[key][f"Z_sh_eps_{int(100*sys_err):02d}"] = Z_sh
 
-    return pd.DataFrame(rows)
-
-
+    return pd.DataFrame(list(rows_dict.values()))
 
 
 # ============================================================
@@ -600,6 +973,7 @@ def run_fast_mcut_scan(sm_data, bsm_data, labels, mcuts, mcut_max, bin_width, L_
 # ============================================================
 
 def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None, excl_stats=False, fake_model='FakeData', best_fits=None):
+    """Generates a grid of plots displaying significance Z-scores as a function of the minimum mass cut."""
     syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
     
     pairs = list(results["pair"].unique())
@@ -655,6 +1029,7 @@ def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None
 
 
 def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_stats=False, shareY=True, fake_model='FakeData', best_fits=None):
+    """Generates a grid of plots displaying significance Z-scores as a function of projected luminosity."""
     syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
     
     pairs = list(results["pair"].unique())
@@ -675,7 +1050,7 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
             color, ls = syst_styles.get(eps_syst, ("black", "-"))
             label = "stat. only" if eps_syst == 0 else rf"{int(100*eps_syst)}\% syst."
             ax.plot(sub["lumi"], sub[col], marker="o", color=color, linestyle=ls, label=label)
-            if eps_syst == 0 and sub[col].iloc[-1] >= 10: ax.set_ylim([0,12])
+            ax.set_ylim([0,8])
 
         ax.axhline(3.0, color='gray', linestyle='--', alpha=0.7, linewidth=1.5, label=r"$Z = 3\sigma$")
         ax.axhline(5.0, color='gray', linestyle=':', alpha=0.7, linewidth=1.5, label=r"$Z = 5\sigma$")
@@ -695,7 +1070,6 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
         
         beautify_axis(ax, grid=True) 
 
-    # Bulletproof Spacing
     plt.tight_layout(rect=[0, 0, 1, 0.86])
 
     handles, labels_ = axes[-1].get_legend_handles_labels()
@@ -703,12 +1077,13 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
     fig.legend(by_label.values(), by_label.keys(), loc="center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.88))
     fig.suptitle(method_name + f' [Fake Data Baseline: {format_model_label(fake_model)}]' , fontsize=16, y=0.98)
 
-    if outfile:
+    if outfile is not None:
         fig.savefig(outfile, bbox_inches="tight", dpi=300)
     plt.show()
 
 
 def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None, best_fits=None):
+    """Plots the ratio (Improvement Factor) between the Falloff and Shape separation methods over varying mcut."""
     eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
     pairs = list(results["pair"].unique())
     upper_lim = f"{mcut_max}" if mcut_max is not None else r"\infty"
@@ -745,7 +1120,6 @@ def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None, best_fits=N
 
     axes[0].set_ylabel(rf"Improvement Ratio ($Z_{{\rm falloff}}/Z_{{\rm shape}}$)")
     
-    # Compress slightly to ensure the title fits
     plt.tight_layout(rect=[0, 0, 1, 0.90])
     axes[-1].legend(loc="best")
 
@@ -755,6 +1129,7 @@ def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None, best_fits=N
 
 
 def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None, best_fits=None):
+    """Plots the ratio (Improvement Factor) between the Falloff and Shape separation methods over varying luminosity."""
     eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
     pairs = list(results["pair"].unique())
 
@@ -790,7 +1165,6 @@ def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None, bes
 
     axes[0].set_ylabel(rf"Improvement Ratio ($Z_{{\rm falloff}}/Z_{{\rm shape}}$)")
     
-    # Compress slightly to ensure the title fits
     plt.tight_layout(rect=[0, 0, 1, 0.90])
     axes[-1].legend(loc="best")
 
@@ -799,10 +1173,10 @@ def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None, bes
     plt.show()
 
 # ============================================================
-# Standalone Ratio Significance vs Lumi Scan (The Grid Plot)
+# Standalone Peak Ratio Significance vs Lumi Scan (Covariance Math)
 # ============================================================
 
-def plot_ratio_significance_vs_lumi(df_sm, df_bsm, 
+def plot_ratio_significance_vs_lumi(fitted_data_dict, 
                                     target_models=["Scalar", "VLF", "Zprime"],
                                     var="m_tt", 
                                     lums=np.array([300, 500, 1000, 1500, 2000, 2500, 3000]),
@@ -810,9 +1184,11 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
                                     rng=(1500, 4500), 
                                     peak_search_rng=(1500, 2500),
                                     asimov_model='FakeData',
-                                    n_bp=18, n_ap=27,
-                                    best_fits=None):
-    
+                                    n_bp=18, n_ap=27):
+    """
+    Executes the advanced Peak Ratio Method to compute separation significances 
+    using explicit Covariance matrix inversions to isolate shape differences from overall normalizations.
+    """
     results = {model: {sys: [] for sys in sys_err_list} for model in target_models}
     
     def get_cols(df):
@@ -820,38 +1196,48 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
         w_col = "weight" if "weight" in df.columns else "w_norm"
         return l_col, w_col
 
-    lbl_sm, wgt_sm = get_cols(df_sm)
-    df_sm_clean = df_sm[[lbl_sm, var, wgt_sm]].replace([np.inf, -np.inf], np.nan).dropna()
-    x_sm = df_sm_clean[var].values
-
-    lbl_bsm, wgt_bsm = get_cols(df_bsm)
-    df_bsm_clean = df_bsm[[lbl_bsm, var, wgt_bsm]].replace([np.inf, -np.inf], np.nan).dropna()
-
     bin_edges = np.arange(rng[0], rng[1] + 100, 100)
     bin_centers_full = bin_edges[:-1] + np.diff(bin_edges)/2
 
-    for lum in lums:
-        w_sm = df_sm_clean[wgt_sm].values * lum * 1000.0
-        h_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm)
-        var_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm**2) 
+    for sys_err in sys_err_list:
+        # Utilize the systematic-specific dictionary from fit_and_assemble_data, default to 0.0 if missing
+        active_sys_key = sys_err if sys_err in fitted_data_dict else 0.0
+        
+        df_sm = fitted_data_dict[active_sys_key]['df_sm']
+        df_bsm = fitted_data_dict[active_sys_key]['df_bsm']
 
-        raw_signals = {}
-        for sig in [asimov_model] + target_models:
-            sig_df = df_bsm_clean[df_bsm_clean[lbl_bsm].astype(str) == sig]
-            if not sig_df.empty:
-                x_sig = sig_df[var].values
-                w_sig = sig_df[wgt_bsm].values * lum * 1000.0
-                h_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig)
-                v_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig**2)
-                raw_signals[sig] = {'h_sig': h_sig, 'v_sig': v_sig}
+        lbl_sm, wgt_sm = get_cols(df_sm)
+        df_sm_clean = df_sm[[lbl_sm, var, wgt_sm]].replace([np.inf, -np.inf], np.nan).dropna()
+        x_sm = df_sm_clean[var].values
 
-        for sys_err in sys_err_list:
+        lbl_bsm, wgt_bsm = get_cols(df_bsm)
+        df_bsm_clean = df_bsm[[lbl_bsm, var, wgt_bsm]].replace([np.inf, -np.inf], np.nan).dropna()
+
+        for lum in lums:
+            # 1. Scale Baseline SM Events
+            w_sm = df_sm_clean[wgt_sm].values * lum * 1000.0
+            h_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm)
+            var_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm**2) 
+
+            # 2. Extract and Scale Signal Models
+            raw_signals = {}
+            for sig in [asimov_model] + target_models:
+                sig_df = df_bsm_clean[df_bsm_clean[lbl_bsm].astype(str) == sig]
+                if not sig_df.empty:
+                    x_sig = sig_df[var].values
+                    w_sig = sig_df[wgt_bsm].values * lum * 1000.0
+                    h_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig)
+                    v_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig**2)
+                    raw_signals[sig] = {'h_sig': h_sig, 'v_sig': v_sig}
+
+            # 3. Generate Hypothesis Sums (SM + Signal)
             hypotheses = {}
             for sig, data in raw_signals.items():
                 h_tot = h_sm + data['h_sig']
                 err_tot = np.sqrt(var_sm + data['v_sig'] + (sys_err * h_sm)**2)
                 hypotheses[sig] = {'h': h_tot, 'err': err_tot}
 
+            # 4. Search for the interference Peak relative to SM
             h_asimov = hypotheses[asimov_model]['h']
             excess_ratio = np.divide(h_asimov, h_sm, out=np.zeros_like(h_asimov), where=h_sm > 0)
 
@@ -865,6 +1251,7 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
             end_idx = min(len(bin_edges)-1, b_peak + n_ap)
             peak_local_idx = b_peak - start_idx
             
+            # 5. Generate Ratio Arrays (Bin Yield / Peak Yield)
             ratios_dict = {}
             for name, data in hypotheses.items():
                 h, herr = data['h'], data['err']
@@ -883,6 +1270,7 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
             valid_r_A = r_A[stats_mask]
             N_eval = len(valid_r_A)
 
+            # 6. Compute Covariances & Z-Scores using Matrix Formulations (Delta Method)
             for model in target_models:
                 r_B = ratios_dict[model]['r'][stats_mask]
                 n_B = hypotheses[model]['h'][start_idx:end_idx][stats_mask]
@@ -924,6 +1312,9 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
         0.10: {'c': '#d62728', 'ls': ':',  'lbl': '10\% syst.'}
     }
 
+    # Derive best fits to display on title using baseline dictionary context
+    title_best_fits = fitted_data_dict[0.0]['best_fits'] if 0.0 in fitted_data_dict else fitted_data_dict[list(fitted_data_dict.keys())[0]]['best_fits']
+
     for i, model in enumerate(target_models):
         ax = axes[i]
         for sys_err in sys_err_list:
@@ -935,7 +1326,7 @@ def plot_ratio_significance_vs_lumi(df_sm, df_bsm,
         ax.axhline(5.0, color='gray', linestyle=':', alpha=0.7, linewidth=1.8, label='$Z=5\sigma$')
 
         title_str = f"Fake Data vs {format_model_label(model)}"
-        mass_str = get_mass_label_from_fits(model, best_fits)
+        mass_str = get_mass_label_from_fits(model, title_best_fits)
         if mass_str:
             title_str += f"\n[{mass_str}]"
 
