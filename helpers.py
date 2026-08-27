@@ -157,7 +157,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     output_dict = {}
 
     # --------------------------------------------------------
-    # 2. Iterate through each Requested Systematic Error
+    # Iterate through each Requested Systematic Error
     # --------------------------------------------------------
     for sys_err in sys_err_list:
         print(f"\n============================================================")
@@ -260,7 +260,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         zp_20pc_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
 
         # --------------------------------------------------------
-        # 3. High-Performance NumPy Data Extraction
+        # NumPy Data Extraction
         # --------------------------------------------------------
         KEYS_TO_SUM = ['xsec (pb)', 'n_events']
         KEYS_TO_KEEP = ['mTT', 'weights', 'pT']
@@ -325,7 +325,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             raw_data['SM']['arrays']['weights'] = raw_data['SM']['arrays']['weights'].astype(np.float64) / sm_file_count
 
         # --------------------------------------------------------
-        # 4. Apply Final Scalings & Construct DataFrames
+        # Apply Final Scalings & Construct DataFrames
         # --------------------------------------------------------
         for model_name, data in raw_data.items():
             arrs = data['arrays']
@@ -815,7 +815,7 @@ def get_mass_label_from_fits(model_name, best_fits):
 
 
 # ============================================================
-# Optimized Mass & Luminosity Scans (Adapted for Dictionary Routing)
+# Optimized Mass & Luminosity Scans 
 # ============================================================
 
 def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_width, lumi_targets, sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm=False):
@@ -1214,12 +1214,12 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
         df_bsm_clean = df_bsm[[lbl_bsm, var, wgt_bsm]].replace([np.inf, -np.inf], np.nan).dropna()
 
         for lum in lums:
-            # 1. Scale Baseline SM Events
+            # Scale Baseline SM Events
             w_sm = df_sm_clean[wgt_sm].values * lum * 1000.0
             h_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm)
             var_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm**2) 
 
-            # 2. Extract and Scale Signal Models
+            # Extract and Scale Signal Models
             raw_signals = {}
             for sig in [asimov_model] + target_models:
                 sig_df = df_bsm_clean[df_bsm_clean[lbl_bsm].astype(str) == sig]
@@ -1230,14 +1230,14 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
                     v_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig**2)
                     raw_signals[sig] = {'h_sig': h_sig, 'v_sig': v_sig}
 
-            # 3. Generate Hypothesis Sums (SM + Signal)
+            # Generate Hypothesis Sums (SM + Signal)
             hypotheses = {}
             for sig, data in raw_signals.items():
                 h_tot = h_sm + data['h_sig']
                 err_tot = np.sqrt(var_sm + data['v_sig'] + (sys_err * h_sm)**2)
                 hypotheses[sig] = {'h': h_tot, 'err': err_tot}
 
-            # 4. Search for the interference Peak relative to SM
+            # Search for the interference Peak relative to SM
             h_asimov = hypotheses[asimov_model]['h']
             excess_ratio = np.divide(h_asimov, h_sm, out=np.zeros_like(h_asimov), where=h_sm > 0)
 
@@ -1251,7 +1251,7 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
             end_idx = min(len(bin_edges)-1, b_peak + n_ap)
             peak_local_idx = b_peak - start_idx
             
-            # 5. Generate Ratio Arrays (Bin Yield / Peak Yield)
+            # Generate Ratio Arrays (Bin Yield / Peak Yield)
             ratios_dict = {}
             for name, data in hypotheses.items():
                 h, herr = data['h'], data['err']
@@ -1270,7 +1270,7 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
             valid_r_A = r_A[stats_mask]
             N_eval = len(valid_r_A)
 
-            # 6. Compute Covariances & Z-Scores using Matrix Formulations (Delta Method)
+            # Compute Covariances & Z-Scores using Matrix Formulations (Delta Method)
             for model in target_models:
                 r_B = ratios_dict[model]['r'][stats_mask]
                 n_B = hypotheses[model]['h'][start_idx:end_idx][stats_mask]
