@@ -19,6 +19,7 @@ import tempfile
 import pylhe
 import gc
 from scipy.optimize import minimize
+from scipy.interpolate import interp1d
 
 SQRT_S = 13000.0  # Center of mass energy in GeV
 
@@ -81,26 +82,11 @@ def load_model_data(base_path, model_name, rescale=1.0):
 # Automated Configuration, Best Fit & Loading Module
 # ============================================================
 
+
 def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_dir='./drive/MyDrive/Distributions', zp_limit_csv='Safe_Limits_Zprime.csv'):
     """
-    Scans BSM mass points, performs Chi-squared minimization to fit model signal 
-    strengths to a provided Fake Data target, and builds analysis-ready DataFrames.
-    
-    This function handles the heavy lifting of reading the raw `.npz` files, normalizing 
-    the Fake Data to match safe cross-section limits, optimizing the coupling 
-    constants (mu), and assembling the final weighted Pandas DataFrames for each 
-    requested systematic error baseline.
-    
-    Args:
-        fake_data_files (list): File paths to the .npz files acting as pseudo-data.
-        sys_err_list (list): Fractional systematic errors to evaluate (e.g., [0.0, 0.05]).
-        lumi (float): Target integrated luminosity in fb^-1.
-        base_dir (str): Root directory containing the MC distribution files.
-        zp_limit_csv (str): Path to the CSV containing upper limits on Z' cross sections.
-        
-    Returns:
-        dict: A nested dictionary mapping each systematic error to its corresponding 
-              assembled BSM DataFrame, SM DataFrame, and best-fit parameters.
+    Scans BSM mass points, performs 1D profile likelihood minimization 
+    to fit model signal strengths to Fake Data, and builds analysis-ready DataFrames.
     """
     if sys_err_list is None or len(sys_err_list) == 0:
         sys_err_list = [0.0]
@@ -130,12 +116,10 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         h_fake, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
         n_fake += h_fake * lumi * 1000.0
 
-    # Normalize the generated Fake Data inside the specific mass mask to hit the target yield exactly
     factor = target_yield / np.sum(n_fake[mass_mask]) if np.sum(n_fake[mass_mask]) > 0 else 1.0
     n_fake = n_fake * factor
     print(f"Fake Data correctly normalized to yield: {np.sum(n_fake[mass_mask], dtype=np.float64):.2f} events in target window.")
 
-    # Aggregate SM backgrounds
     n_sm = np.zeros(len(bins)-1, dtype=np.float64)
     for f in sm_files:
         d = np.load(f, allow_pickle=True)
@@ -144,110 +128,157 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     if len(sm_files) > 0:
         n_sm = n_sm / len(sm_files)
 
-    def find_best_mu(n_sig_template, n_fake_data, denom):
-        """Minimizes Chi-squared to find the optimal signal scaling factor (mu)."""
-        def objective(mu):
-            return np.sum(((mu * n_sig_template - n_fake_data)**2) / denom, dtype=np.float64)
-        # bounds=[(0.0, None)] ensures the signal strength physically cannot be negative
-        res = minimize(objective, x0=[8.0], bounds=[(0.0, None)])
-        return res.x[0], res.fun
+    # --------------------------------------------------------
+    # Helper Functions: Grids and Fitting Core
+    # --------------------------------------------------------
+    def build_model_grid(mass_list, file_pattern_func):
+        """Pre-loads MC files to build a (Mass, Bins) grid."""
+        valid_masses, grid = [], []
+        for m in mass_list:
+            scan_files = glob.glob(file_pattern_func(m))
+            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files:
+                d = np.load(f, allow_pickle=True)
+                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                n_sig += h * lumi * 1000.0
+            
+            # Use absolute sum to ensure models with net-negative interference are not dropped
+            if np.sum(np.abs(n_sig)) > 0:
+                valid_masses.append(m)
+                grid.append(n_sig)
+                
+        if not valid_masses: return None, None
+        return np.array(valid_masses), np.array(grid)
 
+    def fit_1d_parabolic(m_arr, grid_arr, denom, max_mu_sqrt, sys_err):
+        """Fits mu discretely, applies a local 3-point parabolic fit around the minimum."""
+        if m_arr is None or len(m_arr) == 0: 
+            return None, np.inf, 0.0
+            
+        chi2_vals, mu_vals = [], []
+        safe_denom = np.where(denom > 0, denom, 1e-10)
+        
+        # Calculate Total Observed Pseudo-Data (SM Background + Injected Fake Signal)
+        N_obs = n_sm + n_fake
+        safe_N_obs = np.where(N_obs > 0, N_obs, 1e-10)
+        
+        # 1. Evaluate discrete points
+        for n_sig in grid_arr:
+            if sys_err == 0.0:
+                # --- Exact Poisson Likelihood ---
+                def objective(mu):
+                    # Expected Yield = SM + Scaled Signal
+                    n_exp = n_sm + mu * n_sig
+                    safe_n_exp = np.where(n_exp > 0, n_exp, 1e-10)
+                    # -2 * ln(L) = 2 * sum [ expected - observed + observed * ln(observed / expected) ]
+                    return 2.0 * np.sum(safe_n_exp - N_obs + N_obs * np.log(safe_N_obs / safe_n_exp))
+            else:
+                # --- Asymptotic Chi-Squared ---
+                # Numerator: (Total Expected - Total Observed)^2 mathematically reduces to (mu*n_sig - n_fake)^2
+                def objective(mu):
+                    return np.sum(((mu * n_sig - n_fake)**2) / safe_denom)
+                    
+            res = minimize(objective, x0=[8.0], bounds=[(0.0, max_mu_sqrt**2)])
+            chi2_vals.append(res.fun)
+            mu_vals.append(res.x[0])
+            
+        chi2_vals = np.array(chi2_vals)
+        mu_vals = np.array(mu_vals)
+        
+        # 2. Find the discrete minimum index
+        idx_min = np.argmin(chi2_vals)
+        
+        # Safely return discrete minimum if we lack enough points for a parabola
+        if len(m_arr) < 3:
+            return m_arr[idx_min], chi2_vals[idx_min], np.sqrt(mu_vals[idx_min])
+        
+        # 3. Define a 3-point local window (handling boundary edges)
+        if idx_min == 0:
+            window = [0, 1, 2]
+        elif idx_min == len(m_arr) - 1:
+            window = [len(m_arr) - 3, len(m_arr) - 2, len(m_arr) - 1]
+        else:
+            window = [idx_min - 1, idx_min, idx_min + 1]
+            
+        m_window = m_arr[window]
+        chi2_window = chi2_vals[window]
+        mu_window = mu_vals[window]
+        
+        # 4. Fit a parabola: y = ax^2 + bx + c
+        coeffs = np.polyfit(m_window, chi2_window, 2)
+        a, b, c = coeffs
+        
+        # 5. Calculate analytical vertex and corresponding mu
+        if a > 0:
+            best_m = -b / (2 * a)
+            best_m = np.clip(best_m, m_arr[0], m_arr[-1])
+            best_chi2 = a * (best_m**2) + b * best_m + c
+            
+            mu_coeffs = np.polyfit(m_window, mu_window, 2)
+            best_mu = np.polyval(mu_coeffs, best_m)
+            best_mu = np.clip(best_mu, 0.0, max_mu_sqrt**2)
+        else:
+            # Fallback if MC noise creates a concave window
+            best_m = m_arr[idx_min]
+            best_chi2 = chi2_vals[idx_min]
+            best_mu = mu_vals[idx_min]
+            
+        return best_m, best_chi2, np.sqrt(best_mu)
+
+    def snap_to_grid(m, m_grid):
+        """Forces a continuous mass back to the nearest integer grid point for array loading."""
+        if m is None or m_grid is None or len(m_grid) == 0: 
+            return 1000.0
+        return m_grid[(np.abs(m_grid - m)).argmin()]
+
+    # --------------------------------------------------------
+    # 2. Build Grids (Executed once to save I/O overhead)
+    # --------------------------------------------------------
     masses_vlf_scalar = np.arange(1000., 3100., 100.)
     masses_zp = np.arange(1000., 4600., 100.)
+    
+    print("Pre-loading interpolation grids...")
+    vlf_m, vlf_grid = build_model_grid(masses_vlf_scalar, lambda m: f'{base_dir}/VLF/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
+    scalar_m, scalar_grid = build_model_grid(masses_vlf_scalar, lambda m: f'{base_dir}/Scalar/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
+    zp_m, zp_grid = build_model_grid(masses_zp, lambda m: f'{base_dir}/Zprime/mass_scan/mZp_{m:.0f}.npz')
+    zp20_m, zp20_grid = build_model_grid(masses_zp, lambda m: f'{base_dir}/Zprime/20pc_width/mZp_{m:.0f}.npz')
+
     output_dict = {}
 
     # --------------------------------------------------------
-    # Iterate through each Requested Systematic Error
+    # 3. Iterate through each Requested Systematic Error
     # --------------------------------------------------------
     for sys_err in sys_err_list:
         print(f"\n============================================================")
         print(f" Fitting for Systematic Error: {sys_err*100:.1f}%")
         print(f"============================================================")
         
-        # Denominator for Chi2 includes statistical uncertainty + systematic variance on SM background
         chi2_denom_masked = (n_fake + n_sm) + (sys_err * n_sm)**2
 
-        # Trackers for the absolute global minimums: (Mass, minimum_chi2, best_coupling)
         chi2_min = {
-            'VLF': (None, np.inf, 0.),
-            'Scalar': (None, np.inf, 0.),
-            'Zprime': (None, np.inf, 0.),
-            'Zprime_20pc': (None, np.inf, 0.),
+            'VLF': fit_1d_parabolic(vlf_m, vlf_grid, chi2_denom_masked, 7.0, sys_err),
+            'Scalar': fit_1d_parabolic(scalar_m, scalar_grid, chi2_denom_masked, 10.1, sys_err),
+            'Zprime': fit_1d_parabolic(zp_m, zp_grid, chi2_denom_masked, np.inf, sys_err),
+            'Zprime_20pc': fit_1d_parabolic(zp20_m, zp20_grid, chi2_denom_masked, np.inf, sys_err),
             'FakeData': (1000.0, 0.0, np.sqrt(factor))
         }
 
-        # --- VLF Mass Scan ---
-        for m in masses_vlf_scalar:
-            scan_files = glob.glob(f'{base_dir}/VLF/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
-            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
-            for f in scan_files:
-                d = np.load(f, allow_pickle=True)
-                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
-                n_sig += h * lumi * 1000.0
-            if np.sum(n_sig) == 0: continue
-            
-            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
-            
-            # Filter unphysical couplings (yDM^4 = mu, so yDM = sqrt(mu))
-            if np.sqrt(best_mu) >= 7.0: continue
-            if chi2_val < chi2_min['VLF'][1]: chi2_min['VLF'] = (m, chi2_val, np.sqrt(best_mu))
-
-        # --- Scalar Mass Scan ---
-        for m in masses_vlf_scalar:
-            scan_files = glob.glob(f'{base_dir}/Scalar/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
-            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
-            for f in scan_files:
-                d = np.load(f, allow_pickle=True)
-                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
-                n_sig += h * lumi * 1000.0
-            if np.sum(n_sig) == 0: continue
-            
-            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
-            if np.sqrt(best_mu) >= 10.1: continue
-            if chi2_val < chi2_min['Scalar'][1]: chi2_min['Scalar'] = (m, chi2_val, np.sqrt(best_mu))
-
-        # --- Zprime Mass Scan ---
-        for m in masses_zp:
-            scan_files = glob.glob(f'{base_dir}/Zprime/mass_scan/mZp_{m:.0f}.npz')
-            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
-            for f in scan_files:
-                d = np.load(f, allow_pickle=True)
-                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
-                n_sig += h * lumi * 1000.0
-            if np.sum(n_sig) == 0: continue
-            
-            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
-            if chi2_val < chi2_min['Zprime'][1]: chi2_min['Zprime'] = (m, chi2_val, np.sqrt(best_mu))
-
-        # --- Zprime 20% Width Mass Scan ---
-        for m in masses_zp:
-            scan_files = glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{m:.0f}.npz')
-            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
-            for f in scan_files:
-                d = np.load(f, allow_pickle=True)
-                h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
-                n_sig += h * lumi * 1000.0
-            if np.sum(n_sig) == 0: continue
-            
-            best_mu, chi2_val = find_best_mu(n_sig, n_fake, chi2_denom_masked)
-            if chi2_val < chi2_min['Zprime_20pc'][1]: chi2_min['Zprime_20pc'] = (m, chi2_val, np.sqrt(best_mu))
-
-        print(f"--- Global Best Fit Results (sys_err = {sys_err}) ---")
+        print(f"--- Global Best Fit Results ---")
         for model, fit in chi2_min.items():
             mass, chi2, best_mu = fit
             if mass is not None:
-                print(f"{model:12}: Mass = {mass:.0f} GeV | Scaling factor = {best_mu:.6e} | Min Chi^2 = {chi2:.2f}")
+                print(f"{model:12}: Mass = {mass:.2f} GeV | Scaling factor = {best_mu:.6e} | Min Chi^2 = {chi2:.2f}")
 
-        # Assemble the dictionary of best-fit configurations for DataFrame extraction
+        # Map continuous results and snap to grid for physical array extraction
         best_fits = {
-            'VLF':    {'mPsiT': chi2_min['VLF'][0], 'mSDM': chi2_min['VLF'][0]-100., 'scale_factor': chi2_min['VLF'][2]},
-            'Scalar': {'mST': chi2_min['Scalar'][0], 'mChi': chi2_min['Scalar'][0]-100., 'scale_factor': chi2_min['Scalar'][2]},
-            'Zprime': {'mZp': chi2_min['Zprime'][0], 'scale_factor': chi2_min['Zprime'][2]},
-            'Zprime_20pc': {'mZp': chi2_min['Zprime_20pc'][0], 'scale_factor': chi2_min['Zprime_20pc'][2]},
+            'VLF':    {'mPsiT': snap_to_grid(chi2_min['VLF'][0], vlf_m), 'mSDM': snap_to_grid(chi2_min['VLF'][0], vlf_m)-100., 'scale_factor': chi2_min['VLF'][2], 'continuous_m': chi2_min['VLF'][0]},
+            'Scalar': {'mST': snap_to_grid(chi2_min['Scalar'][0], scalar_m), 'mChi': snap_to_grid(chi2_min['Scalar'][0], scalar_m)-100., 'scale_factor': chi2_min['Scalar'][2], 'continuous_m': chi2_min['Scalar'][0]},
+            'Zprime': {'mZp': snap_to_grid(chi2_min['Zprime'][0], zp_m), 'scale_factor': chi2_min['Zprime'][2], 'continuous_m': chi2_min['Zprime'][0]},
+            'Zprime_20pc': {'mZp': snap_to_grid(chi2_min['Zprime_20pc'][0], zp20_m), 'scale_factor': chi2_min['Zprime_20pc'][2], 'continuous_m': chi2_min['Zprime_20pc'][0]},
             'FakeData': {'scale_factor': chi2_min['FakeData'][2]}
         }
 
-        # Select the specific .npz files that represent the global minimum for each model
+        # Select the specific .npz files using the snapped integer masses
         vlf_files = (
             list(glob.glob(f'{base_dir}/VLF/qq2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["VLF"]["mPsiT"]:.0f}_mSDM_{best_fits["VLF"]["mSDM"]:.0f}.npz')) +
             list(glob.glob(f'{base_dir}/VLF/gg2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["VLF"]["mPsiT"]:.0f}_mSDM_{best_fits["VLF"]["mSDM"]:.0f}.npz'))
@@ -260,7 +291,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         zp_20pc_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
 
         # --------------------------------------------------------
-        # NumPy Data Extraction
+        # 4. High-Performance NumPy Data Extraction
         # --------------------------------------------------------
         KEYS_TO_SUM = ['xsec (pb)', 'n_events']
         KEYS_TO_KEEP = ['mTT', 'weights', 'pT']
@@ -273,18 +304,15 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
 
         all_target_files = vlf_files + scalar_files + zp_files + zp_20pc_files + sm_files + fake_data_files
         
-        # Stream files sequentially to prevent RAM overflow
         for f in all_target_files:
             aux = np.load(f, allow_pickle=True)
             model_name = aux['model']
             
-            # Sanitize numpy string encodings
             if isinstance(model_name, np.ndarray):
                 model_name = model_name.item() if model_name.size == 1 else model_name[0]
             if isinstance(model_name, bytes):
                 model_name = model_name.decode('utf-8')
 
-            # Route the file data to the correct model container
             targets = []
             if f in fake_data_files: targets.append(raw_data['FakeData'])
             if model_name == '1-loop VLF' and f in vlf_files: targets.append(raw_data['VLF'])
@@ -297,7 +325,6 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
                 aux.close()
                 continue
 
-            # Extract arrays and sum macroscopic scalars
             for target in targets:
                 for key in aux.files:
                     val = aux[key]
@@ -313,19 +340,17 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
                         target['arrays'][key].append(val[:])
             aux.close()
 
-        # Concatenate arrays for each model
         for model in raw_data:
             for key, list_of_arrays in raw_data[model]['arrays'].items():
                 if list_of_arrays:
                     raw_data[model]['arrays'][key] = np.concatenate(list_of_arrays, axis=0)
 
-        # Average weights across SM files to maintain correct physical yield
         sm_file_count = len(sm_files)
         if sm_file_count > 0 and 'weights' in raw_data['SM']['arrays']:
             raw_data['SM']['arrays']['weights'] = raw_data['SM']['arrays']['weights'].astype(np.float64) / sm_file_count
 
         # --------------------------------------------------------
-        # Apply Final Scalings & Construct DataFrames
+        # 5. Apply Final Scalings & Construct DataFrames
         # --------------------------------------------------------
         for model_name, data in raw_data.items():
             arrs = data['arrays']
@@ -334,14 +359,12 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             if 'weights' in arrs:
                 arrs['weights'] = arrs['weights'].astype(np.float64)
 
-            # Apply the squared best-fit coupling to the event weights
             if model_name in ['FakeData', 'VLF', 'Scalar', 'Zprime', 'Zprime_20pc']:
                 fac = np.float64(best_fits.get(model_name, {}).get('scale_factor', 1.0))
                 fac_sq = fac ** 2
                 if fac_sq != 1.0 and 'weights' in arrs:
                     arrs['weights'] = arrs['weights'] * fac_sq
 
-            # Standardize column naming conventions
             if 'weights' in arrs: arrs['weight'] = arrs.pop('weights')
             if 'mTT' in arrs:     arrs['m_tt'] = arrs.pop('mTT')
 
@@ -384,7 +407,6 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             'best_fits': best_fits
         }
 
-        # Clear massive dictionaries from memory explicitly between systematic iterations
         del raw_data, final_dict, labels_list
         gc.collect()
 
@@ -815,22 +837,31 @@ def get_mass_label_from_fits(model_name, best_fits):
 
 
 # ============================================================
-# Optimized Mass & Luminosity Scans 
+# Optimized Mass & Luminosity Scans (Adapted for Dictionary Routing)
 # ============================================================
 
-def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_width, lumi_targets, sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', bin_offset=0.0, sig_norm=False):
+def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_width, lumi_targets, 
+                       sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', 
+                       bin_offset=0.0, sig_norm=False, sm_cms=False, include_sm=True):
     """
     Computes Standard Shape and Normalized Falloff method separation significances 
-    across varying projected luminosities using the correctly fitted baseline per systematic error.
+    across varying projected luminosities. Includes the SM hypothesis if requested.
     """
     rows_dict = {} 
     bins = np.arange(target_mcut + bin_offset, mcut_max + bin_width, bin_width)
 
+    # Ensure 'SM' is present in test models if requested
+    test_labels = list(labels)
+    if include_sm and 'SM' not in test_labels:
+        test_labels.append('SM')
+
     for sys_err in sys_err_list:
         # Fallback strictly to 0.0 systematics if none other are supplied inside the dictionary
         active_sys_key = sys_err if sys_err in fitted_data_dict else 0.0
-        
+
         df_sm = fitted_data_dict[active_sys_key]['df_sm']
+        if sm_cms: 
+            df_sm['weight'] = 1.7 * 0.287 * df_sm['weight']
         df_bsm = fitted_data_dict[active_sys_key]['df_bsm']
 
         sm_x, sm_w = df_sm[var].values, df_sm['weight'].values
@@ -843,16 +874,25 @@ def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_widt
         h_sm_raw = weighted_hist(sm_x[sm_mask], sm_w[sm_mask], bins)
 
         raw_templates = {}
-        for lab in labels + [fake_model]:
+        all_models = test_labels + [fake_model]
+        
+        for lab in all_models:
+            if lab == 'SM':
+                # Pure SM has 0 BSM signal events
+                raw_templates['SM'] = np.zeros_like(h_sm_raw)
+                continue
+                
             sub = df_bsm[df_bsm['label'] == lab]
-            if sub.empty: continue
+            if sub.empty: 
+                continue
             
             lab_x, lab_w = sub[var].values, sub['weight'].values
             hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
             if np.sum(hyp_mask) > 0:
                 raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
 
-        if fake_model not in raw_templates: continue
+        if fake_model not in raw_templates: 
+            continue
         ref_template = raw_templates[fake_model].copy()
 
         for lum in lumi_targets:
@@ -860,20 +900,27 @@ def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_widt
             
             scaled_templates = {}
             norm_templates = {}
-            for lab in labels + [fake_model]:
-                if lab not in raw_templates: continue
+            for lab in all_models:
+                if lab not in raw_templates: 
+                    continue
                 
-                if sig_norm:
-                    aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
-                    scaled_templates[lab] = aligned_sig + h_sm_raw
+                if lab == 'SM':
+                    # No signal added; deviation is strictly zero
+                    scaled_templates['SM'] = h_sm_raw.copy()
+                    norm_templates['SM'] = np.zeros_like(h_sm_raw)
                 else:
-                    scaled_templates[lab] = raw_templates[lab] + h_sm_raw
-                
-                delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
-                norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
+                    if sig_norm:
+                        aligned_sig = event_number_normalization(ref_template, raw_templates[lab], lum=1e-3)
+                        scaled_templates[lab] = aligned_sig + h_sm_raw
+                    else:
+                        scaled_templates[lab] = raw_templates[lab] + h_sm_raw
+                    
+                    delta = build_signed_delta(scaled_templates[lab], h_sm_raw, alpha=alpha)
+                    norm_templates[lab] = normalize_signed_template(delta, alpha=alpha)
 
-            for lab in labels:
-                if lab not in raw_templates or lab == fake_model: continue
+            for lab in test_labels:
+                if lab not in raw_templates or lab == fake_model: 
+                    continue
                 
                 a, b = fake_model, lab
                 hA, hB = scaled_templates[a] * 1000.0 * lum, scaled_templates[b] * 1000.0 * lum
@@ -1028,18 +1075,51 @@ def plot_mcut_syst_grid(results, mcut_max, eps_values, metric="sh", outfile=None
     plt.show()
 
 
-def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_stats=False, shareY=True, fake_model='FakeData', best_fits=None):
+def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_stats=False, shareY=True, fake_model='FakeData', best_fits=None, max_cols=4):
     """Generates a grid of plots displaying significance Z-scores as a function of projected luminosity."""
     syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
     
     pairs = list(results["pair"].unique())
-    fig, axes = plt.subplots(1, len(pairs), figsize=(5.0*len(pairs), 5.2), sharex=True, sharey=shareY)
-    if len(pairs) == 1: axes = [axes]
+    n_plots = len(pairs)
     
+    # --- Custom Grid Layout ---
+    if n_plots == 5:
+        n_rows = 2
+        fig = plt.figure(figsize=(5.0 * 3, 5.2 * 2))
+        gs = gridspec.GridSpec(2, 6, figure=fig)
+        
+        ax0 = fig.add_subplot(gs[0, 0:2])
+        ax1 = fig.add_subplot(gs[0, 2:4], sharex=ax0, sharey=ax0 if shareY else None)
+        ax2 = fig.add_subplot(gs[0, 4:6], sharex=ax0, sharey=ax0 if shareY else None)
+        ax3 = fig.add_subplot(gs[1, 1:3], sharex=ax0, sharey=ax0 if shareY else None)
+        ax4 = fig.add_subplot(gs[1, 3:5], sharex=ax0, sharey=ax0 if shareY else None)
+        
+        axes_flat = [ax0, ax1, ax2, ax3, ax4]
+        
+        # Hide Y-ticks for inner plots to match sharey=True behavior
+        if shareY:
+            for ax in [ax1, ax2, ax4]:
+                ax.tick_params(labelleft=False)
+                
+        # Force X-ticks to remain visible on all due to the staggered overhang
+        for ax in axes_flat:
+            ax.tick_params(labelbottom=True)
+            
+    else:
+        n_cols = min(n_plots, max_cols)
+        n_rows = int(np.ceil(n_plots / n_cols))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.0 * n_cols, 5.2 * n_rows), sharex=True, sharey=shareY)
+        
+        axes_flat = [axes] if n_plots == 1 else axes.flatten().tolist()
+        
+        for k in range(n_plots, len(axes_flat)):
+            fig.delaxes(axes_flat[k])
+            
+    # --- Plotting ---
     method_name = "Standard Shape Method" if metric == "sh" else "Normalized Falloff Method"
 
     for j, pair in enumerate(pairs):
-        ax = axes[j]
+        ax = axes_flat[j]
         sub = results[results["pair"] == pair].sort_values("lumi")
         eps_v = eps_values[1:] if excl_stats else eps_values
 
@@ -1058,29 +1138,148 @@ def plot_lumi_syst_grid(results, eps_values, metric="sh", outfile=None, excl_sta
         bsm_name = pair.split(" vs ")[-1] if " vs " in pair else pair
         title_str = format_model_label(pair)
         
-        mass_str = get_mass_label_from_fits(bsm_name, best_fits)
-        if mass_str:
-            title_str += f"\n[{mass_str}]"
+        if bsm_name != "SM" and best_fits is not None:
+            mass_str = get_mass_label_from_fits(bsm_name, best_fits)
+            if mass_str:
+                title_str += f"\n[{mass_str}]"
             
         ax.set_title(title_str)
-        if j == 0 or not shareY:
+        
+        # --- Edge Detection for Labels ---
+        if n_plots == 5:
+            is_left = (j == 0 or j == 3)
+            is_bottom = (j >= 3)
+        else:
+            is_left = (j % min(n_plots, max_cols) == 0)
+            is_bottom = (j + min(n_plots, max_cols) >= n_plots)
+            
+        if is_left or not shareY:
             ax.set_ylabel(r"Separation Significance $Z$")
-
-        ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
+        if is_bottom:
+            ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
         
         beautify_axis(ax, grid=True) 
 
-    plt.tight_layout(rect=[0, 0, 1, 0.86])
+    top_rect = 1.0 - (0.14 / n_rows)
+    plt.tight_layout(rect=[0, 0, 1, top_rect])
 
-    handles, labels_ = axes[-1].get_legend_handles_labels()
+    handles, labels_ = axes_flat[0].get_legend_handles_labels()
     by_label = dict(zip(labels_, handles))
-    fig.legend(by_label.values(), by_label.keys(), loc="center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.88))
-    fig.suptitle(method_name + f' [Fake Data Baseline: {format_model_label(fake_model)}]' , fontsize=16, y=0.98)
+    
+    fig.legend(by_label.values(), by_label.keys(), loc="center", ncol=3, frameon=False, 
+               bbox_to_anchor=(0.5, top_rect + (0.02 / n_rows)))
+    fig.suptitle(method_name + f' [Fake Data Baseline: {format_model_label(fake_model)}]' , 
+                 fontsize=16, y=1.0 - (0.02 / n_rows))
 
     if outfile is not None:
         fig.savefig(outfile, bbox_inches="tight", dpi=300)
     plt.show()
 
+def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None, best_fits=None, max_cols=4):
+    """Plots the ratio (Improvement Factor) between the Falloff and Shape separation methods over varying luminosity."""
+    eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
+    pairs = list(results["pair"].unique())
+    
+    n_plots = len(pairs)
+    n_cols = min(n_plots, max_cols)
+    n_rows = int(np.ceil(n_plots / max_cols))
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 5.2 * n_rows), sharey=True, sharex=True)
+    
+    if n_plots == 1:
+        axes_flat = [axes]
+    else:
+        axes_flat = axes.flatten()
+
+    for k in range(n_plots, len(axes_flat)):
+        fig.delaxes(axes_flat[k])
+
+    for j, pair in enumerate(pairs):
+        ax = axes_flat[j]
+        sub_pair = results[results["pair"] == pair].sort_values("lumi")
+        
+        for eps in eps_values:
+            fa_col = f"Z_fa_eps_{int(100*eps):02d}"
+            sh_col = f"Z_sh_eps_{int(100*eps):02d}"
+            if fa_col not in sub_pair.columns or sh_col not in sub_pair.columns: continue
+            
+            with np.errstate(divide='ignore', invalid='ignore'):
+                ratio = np.where(sub_pair[sh_col] > 0, sub_pair[fa_col] / sub_pair[sh_col], np.nan)
+            
+            ls, mk = eps_styles.get(eps, ('-', 'o'))
+            ax.plot(sub_pair["lumi"], ratio, linestyle=ls, marker=mk, color=plt.cm.tab10(j), label=rf"${int(100*eps)}\%$ syst.")
+
+        ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0)
+        
+        bsm_name = pair.split(" vs ")[-1] if " vs " in pair else pair
+        title_str = format_model_label(pair)
+        
+        if bsm_name != "SM" and best_fits is not None:
+            mass_str = get_mass_label_from_fits(bsm_name, best_fits)
+            if mass_str:
+                title_str += f"\n[{mass_str}]"
+            
+        ax.set_title(title_str)
+
+        if j % n_cols == 0:
+            ax.set_ylabel(r"Improvement Ratio ($Z_{\rm falloff}/Z_{\rm shape}$)")
+
+        if j + n_cols >= n_plots:
+            ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
+            
+        beautify_axis(ax, grid=True)
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    axes_flat[0].legend(loc="best")
+
+    if outfile:
+        fig.savefig(outfile, bbox_inches="tight", dpi=300)
+    plt.show()
+
+def plot_ratio_pairwise_lumi(results, target_mcut, eps_values, outfile=None, best_fits=None):
+    """Plots the ratio (Improvement Factor) between the Falloff and Shape separation methods over varying luminosity."""
+    eps_styles = {0.0: ('-', 'D'), 0.02: ("-.", "o"), 0.05: ("--", "s"), 0.10: (":", "^")}
+    pairs = list(results["pair"].unique())
+
+    fig, axes = plt.subplots(1, len(pairs), figsize=(5.2 * len(pairs), 5.2), sharey=True)
+    if len(pairs) == 1: axes = [axes]
+
+    for j, (ax, pair) in enumerate(zip(axes, pairs)):
+        sub_pair = results[results["pair"] == pair].sort_values("lumi")
+        
+        for eps in eps_values:
+            fa_col = f"Z_fa_eps_{int(100*eps):02d}"
+            sh_col = f"Z_sh_eps_{int(100*eps):02d}"
+            if fa_col not in sub_pair.columns or sh_col not in sub_pair.columns: continue
+            
+            with np.errstate(divide='ignore', invalid='ignore'):
+                ratio = np.where(sub_pair[sh_col] > 0, sub_pair[fa_col] / sub_pair[sh_col], np.nan)
+            
+            ls, mk = eps_styles.get(eps, ('-', 'o'))
+            ax.plot(sub_pair["lumi"], ratio, linestyle=ls, marker=mk, color=plt.cm.tab10(j), label=rf"${int(100*eps)}\%$ syst.")
+
+        ax.axhline(1.0, color="black", linestyle="--", linewidth=1.0)
+        
+        bsm_name = pair.split(" vs ")[-1] if " vs " in pair else pair
+        title_str = format_model_label(pair)
+        
+        if bsm_name != "SM" and best_fits is not None:
+            mass_str = get_mass_label_from_fits(bsm_name, best_fits)
+            if mass_str:
+                title_str += f"\n[{mass_str}]"
+            
+        ax.set_title(title_str)
+        ax.set_xlabel(rf"Integrated Luminosity $\mathcal{{L}}$ [fb$^{{-1}}$]")
+        beautify_axis(ax, grid=True)
+
+    axes[0].set_ylabel(rf"Improvement Ratio ($Z_{{\rm falloff}}/Z_{{\rm shape}}$)")
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.90])
+    axes[-1].legend(loc="best")
+
+    if outfile:
+        fig.savefig(outfile, bbox_inches="tight", dpi=300)
+    plt.show()
 
 def plot_ratio_pairwise(results, mcut_max, eps_values, outfile=None, best_fits=None):
     """Plots the ratio (Improvement Factor) between the Falloff and Shape separation methods over varying mcut."""
@@ -1214,12 +1413,12 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
         df_bsm_clean = df_bsm[[lbl_bsm, var, wgt_bsm]].replace([np.inf, -np.inf], np.nan).dropna()
 
         for lum in lums:
-            # Scale Baseline SM Events
+            # 1. Scale Baseline SM Events
             w_sm = df_sm_clean[wgt_sm].values * lum * 1000.0
             h_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm)
             var_sm, _ = np.histogram(x_sm, bins=bin_edges, weights=w_sm**2) 
 
-            # Extract and Scale Signal Models
+            # 2. Extract and Scale Signal Models
             raw_signals = {}
             for sig in [asimov_model] + target_models:
                 sig_df = df_bsm_clean[df_bsm_clean[lbl_bsm].astype(str) == sig]
@@ -1230,14 +1429,14 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
                     v_sig, _ = np.histogram(x_sig, bins=bin_edges, weights=w_sig**2)
                     raw_signals[sig] = {'h_sig': h_sig, 'v_sig': v_sig}
 
-            # Generate Hypothesis Sums (SM + Signal)
+            # 3. Generate Hypothesis Sums (SM + Signal)
             hypotheses = {}
             for sig, data in raw_signals.items():
                 h_tot = h_sm + data['h_sig']
                 err_tot = np.sqrt(var_sm + data['v_sig'] + (sys_err * h_sm)**2)
                 hypotheses[sig] = {'h': h_tot, 'err': err_tot}
 
-            # Search for the interference Peak relative to SM
+            # 4. Search for the interference Peak relative to SM
             h_asimov = hypotheses[asimov_model]['h']
             excess_ratio = np.divide(h_asimov, h_sm, out=np.zeros_like(h_asimov), where=h_sm > 0)
 
@@ -1251,7 +1450,7 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
             end_idx = min(len(bin_edges)-1, b_peak + n_ap)
             peak_local_idx = b_peak - start_idx
             
-            # Generate Ratio Arrays (Bin Yield / Peak Yield)
+            # 5. Generate Ratio Arrays (Bin Yield / Peak Yield)
             ratios_dict = {}
             for name, data in hypotheses.items():
                 h, herr = data['h'], data['err']
@@ -1270,7 +1469,7 @@ def plot_ratio_significance_vs_lumi(fitted_data_dict,
             valid_r_A = r_A[stats_mask]
             N_eval = len(valid_r_A)
 
-            # Compute Covariances & Z-Scores using Matrix Formulations (Delta Method)
+            # 6. Compute Covariances & Z-Scores using Matrix Formulations (Delta Method)
             for model in target_models:
                 r_B = ratios_dict[model]['r'][stats_mask]
                 n_B = hypotheses[model]['h'][start_idx:end_idx][stats_mask]
