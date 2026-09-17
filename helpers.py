@@ -19,7 +19,7 @@ import tempfile
 import pylhe
 import gc
 from scipy.optimize import minimize
-from scipy.interpolate import interp1d
+import matplotlib.gridspec as gridspec
 
 SQRT_S = 13000.0  # Center of mass energy in GeV
 
@@ -83,6 +83,7 @@ def load_model_data(base_path, model_name, rescale=1.0):
 # ============================================================
 
 
+
 def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_dir='./drive/MyDrive/Distributions', zp_limit_csv='Safe_Limits_Zprime.csv'):
     """
     Scans BSM mass points, performs 1D profile likelihood minimization 
@@ -112,6 +113,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     # --------------------------------------------------------
     n_fake = np.zeros(len(bins)-1, dtype=np.float64)
     for f in fake_data_files:
+        if not os.path.exists(f): continue
         d = np.load(f, allow_pickle=True)
         h_fake, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
         n_fake += h_fake * lumi * 1000.0
@@ -122,6 +124,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
 
     n_sm = np.zeros(len(bins)-1, dtype=np.float64)
     for f in sm_files:
+        if not os.path.exists(f): continue
         d = np.load(f, allow_pickle=True)
         h_sm, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
         n_sm += h_sm * lumi * 1000.0
@@ -131,68 +134,98 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     # --------------------------------------------------------
     # Helper Functions: Grids and Fitting Core
     # --------------------------------------------------------
-    def build_model_grid(mass_list, file_pattern_func):
-        """Pre-loads MC files to build a (Mass, Bins) grid."""
-        valid_masses, grid = [], []
+    def build_model_grid(mass_list, file_pattern_func_1, file_pattern_func_2=None):
+        """Pre-loads MC files to build a (Mass, Bins) grid, handling pure signal and optional interference."""
+        valid_masses, grid1, grid2 = [], [], []
         for m in mass_list:
-            scan_files = glob.glob(file_pattern_func(m))
-            n_sig = np.zeros(len(bins)-1, dtype=np.float64)
-            for f in scan_files:
+            scan_files_1 = glob.glob(file_pattern_func_1(m))
+            n_sig1 = np.zeros(len(bins)-1, dtype=np.float64)
+            for f in scan_files_1:
                 d = np.load(f, allow_pickle=True)
                 h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
-                n_sig += h * lumi * 1000.0
+                n_sig1 += h * lumi * 1000.0
+            
+            n_sig2 = np.zeros(len(bins)-1, dtype=np.float64)
+            if file_pattern_func_2 is not None:
+                scan_files_2 = glob.glob(file_pattern_func_2(m))
+                for f in scan_files_2:
+                    d = np.load(f, allow_pickle=True)
+                    h, _ = np.histogram(d['mTT'], bins=bins, weights=d['weights'])
+                    n_sig2 += h * lumi * 1000.0
             
             # Use absolute sum to ensure models with net-negative interference are not dropped
-            if np.sum(np.abs(n_sig)) > 0:
+            if np.sum(np.abs(n_sig1)) + np.sum(np.abs(n_sig2)) > 0:
                 valid_masses.append(m)
-                grid.append(n_sig)
+                grid1.append(n_sig1)
+                if file_pattern_func_2 is not None:
+                    grid2.append(n_sig2)
                 
-        if not valid_masses: return None, None
-        return np.array(valid_masses), np.array(grid)
+        if not valid_masses: 
+            return (None, None, None) if file_pattern_func_2 is not None else (None, None)
+            
+        if file_pattern_func_2 is not None:
+            return np.array(valid_masses), np.array(grid1), np.array(grid2)
+        return np.array(valid_masses), np.array(grid1)
 
-    def fit_1d_parabolic(m_arr, grid_arr, denom, max_mu_sqrt, sys_err):
-        """Fits mu discretely, applies a local 3-point parabolic fit around the minimum."""
+    def fit_1d_parabolic(m_arr, grid_arr_1, denom, max_mu_sqrt, sys_err, grid_arr_2=None):
+        """Fits signal multiplier 'k' discretely, applying a local 3-point parabolic fit."""
         if m_arr is None or len(m_arr) == 0: 
             return None, np.inf, 0.0
             
-        chi2_vals, mu_vals = [], []
+        chi2_vals, k_vals = [], []
         safe_denom = np.where(denom > 0, denom, 1e-10)
         
-        # Calculate Total Observed Pseudo-Data (SM Background + Injected Fake Signal)
         N_obs = n_sm + n_fake
         safe_N_obs = np.where(N_obs > 0, N_obs, 1e-10)
         
-        # 1. Evaluate discrete points
-        for n_sig in grid_arr:
+        for i, n_sig1 in enumerate(grid_arr_1):
+            n_sig2 = grid_arr_2[i] if grid_arr_2 is not None else None
+            
+            # Use k directly: S_tot = k^2 * S_quad + k * S_int
             if sys_err == 0.0:
-                # --- Exact Poisson Likelihood ---
-                def objective(mu):
-                    # Expected Yield = SM + Scaled Signal
-                    n_exp = n_sm + mu * n_sig
+                def objective(k_arr):
+                    k = k_arr[0]
+                    n_sig_tot = (k**2) * n_sig1
+                    if n_sig2 is not None:
+                        n_sig_tot += k * n_sig2
+                        
+                    n_exp = n_sm + n_sig_tot
                     safe_n_exp = np.where(n_exp > 0, n_exp, 1e-10)
-                    # -2 * ln(L) = 2 * sum [ expected - observed + observed * ln(observed / expected) ]
                     return 2.0 * np.sum(safe_n_exp - N_obs + N_obs * np.log(safe_N_obs / safe_n_exp))
             else:
-                # --- Asymptotic Chi-Squared ---
-                # Numerator: (Total Expected - Total Observed)^2 mathematically reduces to (mu*n_sig - n_fake)^2
-                def objective(mu):
-                    return np.sum(((mu * n_sig - n_fake)**2) / safe_denom)
-                    
-            res = minimize(objective, x0=[8.0], bounds=[(0.0, max_mu_sqrt**2)])
+                def objective(k_arr):
+                    k = k_arr[0]
+                    n_sig_tot = (k**2) * n_sig1
+                    if n_sig2 is not None:
+                        n_sig_tot += k * n_sig2
+                        
+                    return np.sum(((n_sig_tot - n_fake)**2) / safe_denom)
+            
+            # --- Avoid Local Minima + Allow Negative Interference ---
+            # If interference exists, the coupling multiplier k can be negative
+            max_k = max_mu_sqrt if max_mu_sqrt != np.inf else 15.0 # sensible cap for grid
+            k_min = -max_k if n_sig2 is not None else 0.0
+            
+            #Broad grid sweep to find the true global minimum basin
+            test_ks = np.linspace(k_min, max_k, 100)
+            chi2_tests = [objective([tk]) for tk in test_ks]
+            best_k_guess = test_ks[np.argmin(chi2_tests)]
+            
+            # Precise gradient descent from the correct basin
+            bound_tuple = (k_min, max_k) if max_mu_sqrt != np.inf else (None, None)
+            res = minimize(objective, x0=[best_k_guess], bounds=[bound_tuple])
+            
             chi2_vals.append(res.fun)
-            mu_vals.append(res.x[0])
+            k_vals.append(res.x[0])
             
         chi2_vals = np.array(chi2_vals)
-        mu_vals = np.array(mu_vals)
+        k_vals = np.array(k_vals)
         
-        # 2. Find the discrete minimum index
         idx_min = np.argmin(chi2_vals)
         
-        # Safely return discrete minimum if we lack enough points for a parabola
         if len(m_arr) < 3:
-            return m_arr[idx_min], chi2_vals[idx_min], np.sqrt(mu_vals[idx_min])
+            return m_arr[idx_min], chi2_vals[idx_min], k_vals[idx_min]
         
-        # 3. Define a 3-point local window (handling boundary edges)
         if idx_min == 0:
             window = [0, 1, 2]
         elif idx_min == len(m_arr) - 1:
@@ -202,28 +235,29 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             
         m_window = m_arr[window]
         chi2_window = chi2_vals[window]
-        mu_window = mu_vals[window]
+        k_window = k_vals[window]
         
-        # 4. Fit a parabola: y = ax^2 + bx + c
         coeffs = np.polyfit(m_window, chi2_window, 2)
         a, b, c = coeffs
         
-        # 5. Calculate analytical vertex and corresponding mu
         if a > 0:
             best_m = -b / (2 * a)
             best_m = np.clip(best_m, m_arr[0], m_arr[-1])
             best_chi2 = a * (best_m**2) + b * best_m + c
             
-            mu_coeffs = np.polyfit(m_window, mu_window, 2)
-            best_mu = np.polyval(mu_coeffs, best_m)
-            best_mu = np.clip(best_mu, 0.0, max_mu_sqrt**2)
+            k_coeffs = np.polyfit(m_window, k_window, 2)
+            best_k = np.polyval(k_coeffs, best_m)
+            
+            # Re-apply bounds dynamically
+            local_max_k = max_mu_sqrt if max_mu_sqrt != np.inf else np.inf
+            local_k_min = -local_max_k if grid_arr_2 is not None else 0.0
+            best_k = np.clip(best_k, local_k_min, local_max_k)
         else:
-            # Fallback if MC noise creates a concave window
             best_m = m_arr[idx_min]
             best_chi2 = chi2_vals[idx_min]
-            best_mu = mu_vals[idx_min]
+            best_k = k_vals[idx_min]
             
-        return best_m, best_chi2, np.sqrt(best_mu)
+        return best_m, best_chi2, best_k
 
     def snap_to_grid(m, m_grid):
         """Forces a continuous mass back to the nearest integer grid point for array loading."""
@@ -238,10 +272,24 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     masses_zp = np.arange(1000., 4600., 100.)
     
     print("Pre-loading interpolation grids...")
-    vlf_m, vlf_grid = build_model_grid(masses_vlf_scalar, lambda m: f'{base_dir}/VLF/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
-    scalar_m, scalar_grid = build_model_grid(masses_vlf_scalar, lambda m: f'{base_dir}/Scalar/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz')
-    zp_m, zp_grid = build_model_grid(masses_zp, lambda m: f'{base_dir}/Zprime/mass_scan/mZp_{m:.0f}.npz')
-    zp20_m, zp20_grid = build_model_grid(masses_zp, lambda m: f'{base_dir}/Zprime/20pc_width/mZp_{m:.0f}.npz')
+    vlf_m, vlf_grid = build_model_grid(
+        masses_vlf_scalar, 
+        lambda m: f'{base_dir}/VLF/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz'
+    )
+    scalar_m, scalar_grid = build_model_grid(
+        masses_vlf_scalar, 
+        lambda m: f'{base_dir}/Scalar/*/mass_scan/mPsiT_{m:.0f}_mSDM_{(m-100.):.0f}.npz'
+    )
+    zp_m, zp_grid, zp_grid_int = build_model_grid(
+        masses_zp, 
+        lambda m: f'{base_dir}/Zprime/mass_scan/mZp_{m:.0f}.npz',
+        lambda m: f'{base_dir}/Zprime/mass_scan_int/mZp_{m:.0f}.npz'
+    )
+    zp20_m, zp20_grid, zp20_grid_int = build_model_grid(
+        masses_zp, 
+        lambda m: f'{base_dir}/Zprime/20pc_width/mZp_{m:.0f}.npz',
+        lambda m: f'{base_dir}/Zprime/20pc_width_int/mZp_{m:.0f}.npz'
+    )
 
     output_dict = {}
 
@@ -258,9 +306,9 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         chi2_min = {
             'VLF': fit_1d_parabolic(vlf_m, vlf_grid, chi2_denom_masked, 7.0, sys_err),
             'Scalar': fit_1d_parabolic(scalar_m, scalar_grid, chi2_denom_masked, 10.1, sys_err),
-            'Zprime': fit_1d_parabolic(zp_m, zp_grid, chi2_denom_masked, np.inf, sys_err),
-            'Zprime_20pc': fit_1d_parabolic(zp20_m, zp20_grid, chi2_denom_masked, np.inf, sys_err),
-            'FakeData': (1000.0, 0.0, np.sqrt(factor))
+            'Zprime': fit_1d_parabolic(zp_m, zp_grid, chi2_denom_masked, np.inf, sys_err, zp_grid_int),
+            'Zprime_20pc': fit_1d_parabolic(zp20_m, zp20_grid, chi2_denom_masked, np.inf, sys_err, zp20_grid_int),
+            'FakeData': (1500.0, 0.0, np.sqrt(factor))
         }
 
         print(f"--- Global Best Fit Results ---")
@@ -287,8 +335,12 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             list(glob.glob(f'{base_dir}/Scalar/qq2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["Scalar"]["mST"]:.0f}_mSDM_{best_fits["Scalar"]["mChi"]:.0f}.npz')) +
             list(glob.glob(f'{base_dir}/Scalar/gg2ttbar_gs4_ydm2/mass_scan/mPsiT_{best_fits["Scalar"]["mST"]:.0f}_mSDM_{best_fits["Scalar"]["mChi"]:.0f}.npz'))
         )
+        
         zp_files = list(glob.glob(f'{base_dir}/Zprime/mass_scan/mZp_{best_fits["Zprime"]["mZp"]:.0f}.npz'))
+        zp_int_files = list(glob.glob(f'{base_dir}/Zprime/mass_scan_int/mZp_{best_fits["Zprime"]["mZp"]:.0f}.npz'))
+        
         zp_20pc_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
+        zp_20pc_int_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width_int/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
 
         # --------------------------------------------------------
         # 4. High-Performance NumPy Data Extraction
@@ -297,12 +349,17 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         KEYS_TO_KEEP = ['mTT', 'weights', 'pT']
 
         raw_data = {
-            'FakeData':    {'arrays': {}, 'scalars': {}}, 'Scalar':      {'arrays': {}, 'scalars': {}},
-            'VLF':         {'arrays': {}, 'scalars': {}}, 'Zprime':      {'arrays': {}, 'scalars': {}},
-            'Zprime_20pc': {'arrays': {}, 'scalars': {}}, 'SM':          {'arrays': {}, 'scalars': {}}
+            'FakeData':        {'arrays': {}, 'scalars': {}}, 
+            'Scalar':          {'arrays': {}, 'scalars': {}},
+            'VLF':             {'arrays': {}, 'scalars': {}}, 
+            'Zprime':          {'arrays': {}, 'scalars': {}},
+            'Zprime_int':      {'arrays': {}, 'scalars': {}},
+            'Zprime_20pc':     {'arrays': {}, 'scalars': {}}, 
+            'Zprime_20pc_int': {'arrays': {}, 'scalars': {}},
+            'SM':              {'arrays': {}, 'scalars': {}}
         }
 
-        all_target_files = vlf_files + scalar_files + zp_files + zp_20pc_files + sm_files + fake_data_files
+        all_target_files = vlf_files + scalar_files + zp_files + zp_int_files + zp_20pc_files + zp_20pc_int_files + sm_files + fake_data_files
         
         for f in all_target_files:
             aux = np.load(f, allow_pickle=True)
@@ -315,10 +372,12 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
 
             targets = []
             if f in fake_data_files: targets.append(raw_data['FakeData'])
-            if model_name == '1-loop VLF' and f in vlf_files: targets.append(raw_data['VLF'])
+            elif model_name == '1-loop VLF' and f in vlf_files: targets.append(raw_data['VLF'])
             elif model_name == '1-loop Scalar' and f in scalar_files: targets.append(raw_data['Scalar'])
             elif model_name == 'Z prime' and f in zp_files: targets.append(raw_data['Zprime'])
+            elif model_name == 'Z prime' and f in zp_int_files: targets.append(raw_data['Zprime_int'])
             elif model_name == 'Z prime' and f in zp_20pc_files: targets.append(raw_data['Zprime_20pc'])
+            elif model_name == 'Z prime' and f in zp_20pc_int_files: targets.append(raw_data['Zprime_20pc_int'])
             elif model_name == 'SM' and f in sm_files: targets.append(raw_data['SM'])
 
             if not targets:
@@ -359,20 +418,35 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             if 'weights' in arrs:
                 arrs['weights'] = arrs['weights'].astype(np.float64)
 
+            # Signal terms scale with mu (scale_factor squared)
             if model_name in ['FakeData', 'VLF', 'Scalar', 'Zprime', 'Zprime_20pc']:
                 fac = np.float64(best_fits.get(model_name, {}).get('scale_factor', 1.0))
                 fac_sq = fac ** 2
                 if fac_sq != 1.0 and 'weights' in arrs:
                     arrs['weights'] = arrs['weights'] * fac_sq
+            
+            # Interference terms scale with sqrt(mu) (scale_factor)
+            elif model_name == 'Zprime_int':
+                fac = np.float64(best_fits.get('Zprime', {}).get('scale_factor', 1.0))
+                if fac != 1.0 and 'weights' in arrs:
+                    arrs['weights'] = arrs['weights'] * fac
+                    
+            elif model_name == 'Zprime_20pc_int':
+                fac = np.float64(best_fits.get('Zprime_20pc', {}).get('scale_factor', 1.0))
+                if fac != 1.0 and 'weights' in arrs:
+                    arrs['weights'] = arrs['weights'] * fac
 
+            # Standardize column naming conventions
             if 'weights' in arrs: arrs['weight'] = arrs.pop('weights')
             if 'mTT' in arrs:     arrs['m_tt'] = arrs.pop('mTT')
 
         l_fake = len(raw_data['FakeData']['arrays'].get('weight', []))
         l_s    = len(raw_data['Scalar']['arrays'].get('weight', []))
         l_v    = len(raw_data['VLF']['arrays'].get('weight', []))
-        l_z    = len(raw_data['Zprime']['arrays'].get('weight', []))
-        l_z20  = len(raw_data['Zprime_20pc']['arrays'].get('weight', []))
+        
+        # Calculate combined lengths for the 2-component models
+        l_z    = len(raw_data['Zprime']['arrays'].get('weight', [])) + len(raw_data['Zprime_int']['arrays'].get('weight', []))
+        l_z20  = len(raw_data['Zprime_20pc']['arrays'].get('weight', [])) + len(raw_data['Zprime_20pc_int']['arrays'].get('weight', []))
 
         final_dict = {}
         labels_list = []
@@ -391,8 +465,14 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             if l_fake > 0 and key in raw_data['FakeData']['arrays']:    arrs_to_concat.append(raw_data['FakeData']['arrays'][key])
             if l_s > 0 and key in raw_data['Scalar']['arrays']:         arrs_to_concat.append(raw_data['Scalar']['arrays'][key])
             if l_v > 0 and key in raw_data['VLF']['arrays']:            arrs_to_concat.append(raw_data['VLF']['arrays'][key])
-            if l_z > 0 and key in raw_data['Zprime']['arrays']:         arrs_to_concat.append(raw_data['Zprime']['arrays'][key])
-            if l_z20 > 0 and key in raw_data['Zprime_20pc']['arrays']:  arrs_to_concat.append(raw_data['Zprime_20pc']['arrays'][key])
+            
+            # Recombine standard and interference terms into unified Zprime blocks
+            if key in raw_data['Zprime']['arrays']:             arrs_to_concat.append(raw_data['Zprime']['arrays'][key])
+            if key in raw_data['Zprime_int']['arrays']:         arrs_to_concat.append(raw_data['Zprime_int']['arrays'][key])
+            
+            if key in raw_data['Zprime_20pc']['arrays']:        arrs_to_concat.append(raw_data['Zprime_20pc']['arrays'][key])
+            if key in raw_data['Zprime_20pc_int']['arrays']:    arrs_to_concat.append(raw_data['Zprime_20pc_int']['arrays'][key])
+            
             if arrs_to_concat:
                 final_dict[key] = np.concatenate(arrs_to_concat, axis=0)
 
@@ -840,62 +920,67 @@ def get_mass_label_from_fits(model_name, best_fits):
 # Optimized Mass & Luminosity Scans (Adapted for Dictionary Routing)
 # ============================================================
 
-def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_width, lumi_targets, 
+def run_fast_lumi_scan(fitted_data_by_lumi, labels, target_mcut, mcut_max, bin_width, lumi_targets, 
                        sys_err_list, var="m_tt", alpha=1e-12, fake_model='FakeData', 
                        bin_offset=0.0, sig_norm=False, sm_cms=False, include_sm=True):
     """
     Computes Standard Shape and Normalized Falloff method separation significances 
-    across varying projected luminosities. Includes the SM hypothesis if requested.
+    across varying projected luminosities, using luminosity-specific fits.
     """
     rows_dict = {} 
     bins = np.arange(target_mcut + bin_offset, mcut_max + bin_width, bin_width)
 
-    # Ensure 'SM' is present in test models if requested
     test_labels = list(labels)
     if include_sm and 'SM' not in test_labels:
         test_labels.append('SM')
 
-    for sys_err in sys_err_list:
-        # Fallback strictly to 0.0 systematics if none other are supplied inside the dictionary
-        active_sys_key = sys_err if sys_err in fitted_data_dict else 0.0
-
-        df_sm = fitted_data_dict[active_sys_key]['df_sm']
-        if sm_cms: 
-            df_sm['weight'] = 1.7 * 0.287 * df_sm['weight']
-        df_bsm = fitted_data_dict[active_sys_key]['df_bsm']
-
-        sm_x, sm_w = df_sm[var].values, df_sm['weight'].values
-        sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
-        
-        if np.sum(sm_mask) == 0:
-            print(f"Warning: 0 SM events found above {target_mcut} GeV for systematic {sys_err}.")
+    # Swap hierarchy: Iterate over lumi_targets first
+    for lum in lumi_targets:
+        if lum not in fitted_data_by_lumi:
             continue
             
-        h_sm_raw = weighted_hist(sm_x[sm_mask], sm_w[sm_mask], bins)
+        for sys_err in sys_err_list:
+            active_sys_key = sys_err if sys_err in fitted_data_by_lumi[lum] else 0.0
 
-        raw_templates = {}
-        all_models = test_labels + [fake_model]
-        
-        for lab in all_models:
-            if lab == 'SM':
-                # Pure SM has 0 BSM signal events
-                raw_templates['SM'] = np.zeros_like(h_sm_raw)
+            # Extract the data specifically fitted for 'lum'
+            df_sm = fitted_data_by_lumi[lum][active_sys_key]['df_sm'].copy() # .copy() prevents compounding modifications
+            if sm_cms: 
+                df_sm['weight'] = 1.7 * 0.287 * df_sm['weight']
+            df_bsm = fitted_data_by_lumi[lum][active_sys_key]['df_bsm']
+
+            sm_x, sm_w = df_sm[var].values, df_sm['weight'].values
+            sm_mask = (sm_x > target_mcut) & (sm_x <= mcut_max)
+            
+            if np.sum(sm_mask) == 0:
+                print(f"Warning: 0 SM events found above {target_mcut} GeV for sys {sys_err} at lumi {lum}.")
                 continue
                 
-            sub = df_bsm[df_bsm['label'] == lab]
-            if sub.empty: 
-                continue
+            h_sm_raw = weighted_hist(sm_x[sm_mask], sm_w[sm_mask], bins)
+
+            raw_templates = {}
+            all_models = test_labels + [fake_model]
             
-            lab_x, lab_w = sub[var].values, sub['weight'].values
-            hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
-            if np.sum(hyp_mask) > 0:
-                raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
+            for lab in all_models:
+                if lab == 'SM':
+                    raw_templates['SM'] = np.zeros_like(h_sm_raw)
+                    continue
+                    
+                sub = df_bsm[df_bsm['label'] == lab]
+                if sub.empty: 
+                    continue
+                
+                lab_x, lab_w = sub[var].values, sub['weight'].values
+                hyp_mask = (lab_x > target_mcut) & (lab_x <= mcut_max)
+                if np.sum(hyp_mask) > 0:
+                    raw_templates[lab] = weighted_hist(lab_x[hyp_mask], lab_w[hyp_mask], bins)
 
-        if fake_model not in raw_templates: 
-            continue
-        ref_template = raw_templates[fake_model].copy()
+            if fake_model not in raw_templates: 
+                continue
+            ref_template = raw_templates[fake_model].copy()
 
-        for lum in lumi_targets:
+            # NOTE: If fit_and_assemble_data returns weights already scaled to 'lum', 
+            # you must remove '* lum * 1000.0' below to avoid double-scaling. 
+            # If the weights are strictly cross-sections in pb, keep this logic intact.
             n_sm = h_sm_raw * lum * 1000.0
             
             scaled_templates = {}
@@ -905,7 +990,6 @@ def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_widt
                     continue
                 
                 if lab == 'SM':
-                    # No signal added; deviation is strictly zero
                     scaled_templates['SM'] = h_sm_raw.copy()
                     norm_templates['SM'] = np.zeros_like(h_sm_raw)
                 else:
@@ -929,7 +1013,6 @@ def run_fast_lumi_scan(fitted_data_dict, labels, target_mcut, mcut_max, bin_widt
                 Z_fa, _, _ = asimov_signed_Z_rigorous(dA, dB, hA, hB, n_sm, sys_err, mode="test", alpha=alpha)
                 Z_sh, _, _ = asimov_shape_Z_with_syst(hA, hB, frac_syst=sys_err, mode="test", eps=alpha)
                 
-                # Use a dictionary key (lumi, pair) to append multiple sys errors to the same DataFrame row
                 key = (lum, f"{a} vs {b}")
                 if key not in rows_dict:
                     rows_dict[key] = {"lumi": lum, "pair": f"{a} vs {b}"}
