@@ -99,14 +99,14 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
     zp_limit = pd.read_csv(zp_limit_csv)
     S_tt_dict = dict(zip(zp_limit['mZp_GeV'], zp_limit['S_tt_pb']))
     
-    # Establish baseline target using the 3.2 TeV Z' limit backed off by 5%
-    zp_mass = 3200
-    target_xsec = S_tt_dict[zp_mass] * 0.95
+    # Establish baseline target 
+    zp_mass = 3000
+    target_xsec = S_tt_dict[zp_mass] * 1.1
     target_yield = target_xsec * lumi * 1000.0
 
-    # Define the kinematic binning and the invariant mass window for the fit (1.5 - 5.0 TeV)
+    # Define the kinematic binning and the invariant mass window for the fit (1.0 - 5.0 TeV)
     bins = np.arange(800., 5600., 100.)
-    mass_mask = (bins[:-1] >= 1500) & (bins[:-1] <= 5000)
+    mass_mask = (bins[:-1] >= 1000) & (bins[:-1] <= 5000)
 
     # --------------------------------------------------------
     # 1. Build and Normalize Baselines (Fake Data & SM)
@@ -266,10 +266,10 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         return m_grid[(np.abs(m_grid - m)).argmin()]
 
     # --------------------------------------------------------
-    # 2. Build Grids (Executed once to save I/O overhead)
+    #  Build Grids (Executed once to save I/O overhead)
     # --------------------------------------------------------
     masses_vlf_scalar = np.arange(1000., 3100., 100.)
-    masses_zp = np.arange(1000., 4600., 100.)
+    masses_zp = np.arange(2000., 4600., 100.)
     
     print("Pre-loading interpolation grids...")
     vlf_m, vlf_grid = build_model_grid(
@@ -343,7 +343,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         zp_20pc_int_files = list(glob.glob(f'{base_dir}/Zprime/20pc_width_int/mZp_{best_fits["Zprime_20pc"]["mZp"]:.0f}.npz'))
 
         # --------------------------------------------------------
-        # 4. High-Performance NumPy Data Extraction
+        #  NumPy Data Extraction
         # --------------------------------------------------------
         KEYS_TO_SUM = ['xsec (pb)', 'n_events']
         KEYS_TO_KEEP = ['mTT', 'weights', 'pT']
@@ -409,7 +409,7 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
             raw_data['SM']['arrays']['weights'] = raw_data['SM']['arrays']['weights'].astype(np.float64) / sm_file_count
 
         # --------------------------------------------------------
-        # 5. Apply Final Scalings & Construct DataFrames
+        #  Apply Final Scalings & Construct DataFrames
         # --------------------------------------------------------
         for model_name, data in raw_data.items():
             arrs = data['arrays']
