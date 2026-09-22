@@ -146,7 +146,6 @@ def fit_and_assemble_data(fake_data_files, sys_err_list=None, lumi=500.0, base_d
         if discriminant >= 0:
             if is_20pc:
                 sqrt_factor = (-b - np.sqrt(discriminant)) / (2 * a)
-                print('picking the negative value')
             else:
                 sqrt_factor = (-b + np.sqrt(discriminant)) / (2 * a)
             factor = sqrt_factor**2
