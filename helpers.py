@@ -99,41 +99,30 @@ def fit_and_assemble_data(fake_data_key, workspace_file='lite_workspace.pkl', sy
     bins = ws['bins']
     mass_mask = (bins[:-1] >= 1200) & (bins[:-1] <= 5000)
 
-    zp_limit = pd.read_csv(zp_limit_csv)
-    S_tt_dict = dict(zip(zp_limit['mZp_GeV'], zp_limit['S_tt_pb']))
-    target_yield = S_tt_dict[2600] * lumi * 1000.0
 
-    # 1. Prepare SM and Fake Data yields
+    # Prepare SM and Fake Data yields
     n_sm = ws['SM'] * lumi * 1000.0
     
-    is_20pc = 'Zprime' in fake_data_key
     h_fake_pure = ws['FakeData'][fake_data_key]['pure']
     h_fake_int = ws['FakeData'][fake_data_key]['int']
     
     n_fake_pure = h_fake_pure * lumi * 1000.0
     n_fake_int = h_fake_int * lumi * 1000.0
 
-    yield_pure, yield_int = np.sum(n_fake_pure[mass_mask]), np.sum(n_fake_int[mass_mask])
-
-    # Fake Data Quadratic Solver
-    if yield_pure > 0:
-        a, b, c = yield_pure, yield_int, -target_yield
-        disc = b**2 - 4 * a * c
-        if disc >= 0:
-            if is_20pc:
-                sqrt_factor = (-b - np.sqrt(disc)) / (2 * a)
-            else:
-                sqrt_factor = (-b + np.sqrt(disc)) / (2 * a)
-            factor = sqrt_factor**2
-        else:
-            factor, sqrt_factor = 1.0, 1.0
-    elif yield_int != 0:
-        sqrt_factor = target_yield / yield_int
-        factor = sqrt_factor**2
+    if fake_data_key == 'Scalar_1500':
+            y_dm = 7.5
+            n_fake = (n_fake_pure * (y_dm**2))
+            sqrt_factor = y_dm 
+    elif fake_data_key == 'VLF_1500':
+            y_dm = 3.5
+            n_fake = (n_fake_pure * (y_dm**2))
+            sqrt_factor = y_dm 
+    elif fake_data_key == 'Zprime_3000':
+        gq_gt = -4.0
+        sqrt_factor = -4.0 #*7.745886e-03*1.585365
+        n_fake = (n_fake_pure * (gq_gt**2)) + (n_fake_int * gq_gt)
     else:
-        factor, sqrt_factor = 1.0, 1.0
-
-    n_fake = (n_fake_pure * factor) + (n_fake_int * sqrt_factor)
+        print('Fake Data not available')
     print(f"Fake Data correctly normalized to yield: {np.sum(n_fake[mass_mask], dtype=np.float64):.2f} events in target window.")
     
     N_obs = n_sm + n_fake
