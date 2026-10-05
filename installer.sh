@@ -1,0 +1,37 @@
+#!/bin/sh
+
+homeDIR="$( pwd )"
+
+echo "Installation will take place in $homeDIR"
+
+
+cd $homeDIR
+
+
+#madgraph="MG5_aMC_v3.8.0.tar.gz"
+#URL=https://launchpad.net/mg5amcnlo/3.0/3.8.x/+download/$madgraph
+madgraph="MG5_aMC_v3.6.7.tar.gz"
+URL=https://launchpad.net/mg5amcnlo/3.0/3.6.x/+download/$madgraph
+# Use github version with fix for printing intermediate particles
+#madgraph="mg5amcnlo-3.6.3.zip"
+echo -n "Install MadGraph (y/n)? "
+read answer
+if echo "$answer" | grep -iq "^y" ;then
+        if [ -d "MG5" ]; then
+           rm -rf MG5
+        fi
+	mkdir MG5;
+	echo "[installer] getting MadGraph5"; wget $URL 2>/dev/null || curl -O $URL; tar -zxf $madgraph -C MG5 --strip-components 1;
+	#cp $madgraph $madgraph"_bak"
+	#unzip $madgraph;
+	#mv mg5amcnlo-3.6.3 MG5;
+	#mv $madgraph"_bak" $madgraph
+	cd $homeDIR
+	cd ./MG5;
+	echo "[installer] installing LHAPDF6, HepMC and Collier"
+        echo "install hepmc\ninstall lhapdf6\ninstall collier\nexit\n" > mad_install.txt;
+	./bin/mg5_aMC -f mad_install.txt
+	cd $homeDIR
+	sed  "s|homeDIR|$homeDIR|g" mg5_configuration.txt > ./MG5/input/mg5_configuration.txt;
+fi
+cd $currentDIR
