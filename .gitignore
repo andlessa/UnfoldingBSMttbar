@@ -1,0 +1,4 @@
+*.pyc
+*.pkl
+*.hepmc
+*.hepmc.*
