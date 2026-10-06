@@ -54,7 +54,7 @@ try:
 except ImportError:  # Optional: only required by get_run_metadata/load_lhe_with_corrections.
     pylhe = None
 from matplotlib.lines import Line2D
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 from tqdm.auto import tqdm
 
 SQRT_S = 13_000.0  # proton-proton centre-of-mass energy, GeV
@@ -443,7 +443,7 @@ def fit_and_assemble_data(
     lumi=500.0,
     zp_limit_csv="Safe_Limits_Zprime.csv",
     *,
-    observable="mTT",
+    observable="m_tt",
     workspace_files=None,
     analysis_range=None,
     fit_min=None,
@@ -453,80 +453,50 @@ def fit_and_assemble_data(
     scalar_max_scale=10.1,
     zprime_max_abs_scale=100.0,
 ):
-    """Fit each model grid to an Asimov/synthetic data template.
-
-    The fit is performed in the selected observable and analysis range. Each
-    observable is expected to have its own workspace containing the corresponding
-    bin edges and mass-scan histograms. For every mass point, the coupling-like
-    scale is profiled numerically. The best *available
-    grid mass* is then used to build the returned histogram. A local parabolic
-    mass estimate is reported as a diagnostic, but it is deliberately **not**
-    used to construct a histogram because the code does not interpolate the
-    templates themselves.
-
-    For nonzero ``sys_err``, the objective is the profile Poisson deviance with
-    one independent Gaussian nuisance per bin acting on the SM background.
-
-    Parameters
-    ----------
-    fake_data_key : str
-        Key under ``workspace['FakeData']``. The current default scale map
-        recognizes ``Scalar_1500``, ``VLF_1500``, and ``Zprime_3000``.
-    workspace_file : str, optional
-        Pickle containing ``bins``, ``SM``, ``FakeData``, and ``Models`` for the
-        selected observable. If omitted for ``m_tt``, ``lite_workspace.pkl`` is
-        used for backward compatibility. Other observables require either this
-        argument or ``workspace_files``.
-    observable : str
-        Name of the observable represented by the workspace, for example
-        ``"m_tt"`` or ``"pt_t"``.
-    workspace_files : mapping, optional
-        Mapping from observable name to its workspace file. This is convenient
-        when repeatedly switching observables.
-    analysis_range : (float, float), optional
-        Lower and upper observable values used in the likelihood. For ``pt_t``
-        the configured default is ``(500, 3500)`` GeV. Unknown observables use
-        the full stored workspace range unless this is supplied.
-    sys_err_list : sequence of float, optional
-        Fractional SM systematic uncertainties. Defaults to ``[0.0]``.
-    lumi : float
-        Integrated luminosity in fb^-1.
-    zp_limit_csv : str, optional
-        Retained for backward compatibility with the original API. No Z' limit
-        is applied here because the CSV schema/constraint prescription is not
-        defined in this module. Apply such limits explicitly before fitting or
-        extend this function with a documented constraint reader.
-    fit_min, fit_max : float, optional
-        Deprecated-compatible lower/upper likelihood bounds. Prefer
-        ``analysis_range=(min, max)``. They cannot be combined with
-        ``analysis_range``.
-    fake_scales : mapping, optional
-        Overrides ``DEFAULT_FAKE_SCALES``.
-    vlf_max_scale, scalar_max_scale : float
-        Upper bounds on the non-negative VLF/Scalar scale.
-    zprime_max_abs_scale : float
-        Symmetric bound ``[-value, +value]`` for the signed Z' scale.
-
-    Returns
-    -------
-    dict
-        ``output[sys_err]`` contains ``hists`` (cross-section histograms),
-        ``best_fits``, the workspace ``bins``, ``observable``, and the
-        ``analysis_range`` used in the fit.
     """
-    del zp_limit_csv  # Backward-compatible placeholder; see docstring.
+    Fit each model grid to an Asimov/synthetic data template.
+
+    For every available mass point, the coupling-like scale is profiled
+    continuously. The best available grid mass is used to construct the
+    returned histogram. A local parabolic interpolation in mass is reported
+    only as a diagnostic and is not used to construct a histogram.
+
+    For sys_err = 0, the Poisson deviance is proportional to luminosity.
+    The scale minimization is therefore performed using q/(L * PB_TO_FB),
+    which removes this trivial overall normalization and makes the numerical
+    minimization independent of luminosity.
+
+    For sys_err > 0, the same normalization is also used during minimization.
+    This is only a positive multiplicative constant at fixed luminosity and
+    therefore does not alter the minimum.
+
+    The physical, unnormalized q value is always stored in "min_q".
+
+    For nonzero sys_err, the likelihood profiles one independent Gaussian
+    nuisance parameter per bin acting on the SM background.
+    """
+
+    del zp_limit_csv
 
     observable = str(observable)
+
     if lumi <= 0:
         raise ValueError("lumi must be positive.")
 
     workspace_file = _resolve_workspace_file(
-        observable, workspace_file=workspace_file, workspace_files=workspace_files
+        observable,
+        workspace_file=workspace_file,
+        workspace_files=workspace_files,
     )
 
     sys_err_list = [0.0] if not sys_err_list else list(sys_err_list)
+
     if any(float(eps) < 0 for eps in sys_err_list):
         raise ValueError("Systematic uncertainties must be non-negative.")
+
+    # ============================================================
+    # Load workspace
+    # ============================================================
 
     with open(workspace_file, "rb") as handle:
         ws = pickle.load(handle)
@@ -538,13 +508,20 @@ def fit_and_assemble_data(
             raise KeyError(f"Workspace is missing required key {key!r}.")
 
     bins = _as_1d_float("bins", ws["bins"])
+
     if len(bins) < 2 or np.any(np.diff(bins) <= 0):
         raise ValueError("Workspace bin edges must be strictly increasing.")
 
     n_bins = len(bins) - 1
+
     h_sm = _as_1d_float("workspace['SM']", ws["SM"])
+
     if len(h_sm) != n_bins:
         raise ValueError("SM histogram length does not match workspace bins.")
+
+    # ============================================================
+    # Analysis range
+    # ============================================================
 
     analysis_min, analysis_max = _resolve_analysis_range(
         observable,
@@ -553,7 +530,15 @@ def fit_and_assemble_data(
         legacy_min=fit_min,
         legacy_max=fit_max,
     )
-    fit_mask = (bins[:-1] >= analysis_min) & (bins[:-1] < analysis_max)
+
+    fit_mask = (
+        (bins[:-1] >= analysis_min)
+        & (bins[:-1] < analysis_max)
+    )
+
+    # ============================================================
+    # Synthetic / Asimov data
+    # ============================================================
 
     if fake_data_key not in ws["FakeData"]:
         raise KeyError(
@@ -562,117 +547,244 @@ def fit_and_assemble_data(
         )
 
     fake_entry = ws["FakeData"][fake_data_key]
-    h_fake_pure = _as_1d_float("fake pure histogram", fake_entry["pure"])
-    h_fake_int = _as_1d_float(
-        "fake interference histogram", fake_entry.get("int", np.zeros(n_bins))
+
+    h_fake_pure = _as_1d_float(
+        "fake pure histogram",
+        fake_entry["pure"],
     )
-    _require_same_shape(h_sm=h_sm, h_fake_pure=h_fake_pure, h_fake_int=h_fake_int)
+
+    h_fake_int = _as_1d_float(
+        "fake interference histogram",
+        fake_entry.get("int", np.zeros(n_bins)),
+    )
+
+    _require_same_shape(
+        h_sm=h_sm,
+        h_fake_pure=h_fake_pure,
+        h_fake_int=h_fake_int,
+    )
 
     scale_map = dict(DEFAULT_FAKE_SCALES)
+
     if fake_scales is not None:
         scale_map.update(fake_scales)
+
     if fake_data_key not in scale_map:
         raise KeyError(
             f"No fake-data scale is defined for {fake_data_key!r}. "
             "Pass fake_scales={key: value}."
         )
+
     fake_scale = float(scale_map[fake_data_key])
 
-    # Only Z' uses a separately stored term linear in the signed coupling product.
+    # Only Z' has a separately stored contribution linear in the
+    # signed coupling product.
     fake_uses_interference = fake_data_key.startswith("Zprime")
+
     fake_signal_xsec = _model_signal(
         h_fake_pure,
         fake_scale,
         h_fake_int if fake_uses_interference else None,
     )
 
-    n_sm = h_sm * lumi * PB_TO_FB
-    n_fake = fake_signal_xsec * lumi * PB_TO_FB
+    # Convert cross sections [pb] to yields:
+    # pb * fb^-1 * 1000
+    yield_factor = lumi * PB_TO_FB
+
+    n_sm = h_sm * yield_factor
+    n_fake = fake_signal_xsec * yield_factor
     n_obs = n_sm + n_fake
+
     if np.any(n_obs[fit_mask] < 0):
         bad = np.flatnonzero(fit_mask & (n_obs < 0))
+
         raise ValueError(
             "The synthetic total expectation is negative in fit bins "
             f"{bad.tolist()}; a Poisson likelihood is not defined there."
         )
 
+    # ============================================================
+    # Extract mass grids
+    # ============================================================
+
     def extract_grid(model_pure, model_int=None):
+
         if model_pure not in ws["Models"]:
             return None, None, None
+
         pure_dict = ws["Models"][model_pure]
         int_dict = ws["Models"].get(model_int, {}) if model_int else None
 
         rows = []
+
         for mass_value, hist in pure_dict.items():
-            pure = _as_1d_float(f"{model_pure}[{mass_value}]", hist)
+
+            pure = _as_1d_float(
+                f"{model_pure}[{mass_value}]",
+                hist,
+            )
+
             if len(pure) != n_bins:
                 raise ValueError(
-                    f"Histogram {model_pure}[{mass_value}] has {len(pure)} bins; "
-                    f"expected {n_bins}."
+                    f"Histogram {model_pure}[{mass_value}] has "
+                    f"{len(pure)} bins; expected {n_bins}."
                 )
-            # Do not reject signed templates merely because their total integral is negative.
+
+            # Signed templates are allowed. Only remove completely empty ones.
             if not np.any(np.abs(pure) > 0):
                 continue
 
             interference = None
+
             if model_int is not None:
+
                 if mass_value not in int_dict:
                     raise KeyError(
-                        f"Missing {model_int}[{mass_value}] for {model_pure}[{mass_value}]."
+                        f"Missing {model_int}[{mass_value}] for "
+                        f"{model_pure}[{mass_value}]."
                     )
+
                 interference = _as_1d_float(
-                    f"{model_int}[{mass_value}]", int_dict[mass_value]
+                    f"{model_int}[{mass_value}]",
+                    int_dict[mass_value],
                 )
+
                 if len(interference) != n_bins:
                     raise ValueError(
-                        f"Histogram {model_int}[{mass_value}] has the wrong length."
+                        f"Histogram {model_int}[{mass_value}] "
+                        "has the wrong length."
                     )
-            rows.append((float(mass_value), pure, interference))
+
+            rows.append(
+                (
+                    float(mass_value),
+                    pure,
+                    interference,
+                )
+            )
 
         if not rows:
             return None, None, None
+
         rows.sort(key=lambda row: row[0])
-        masses = np.array([row[0] for row in rows], dtype=float)
-        pure_grid = np.stack([row[1] for row in rows])
-        int_grid = (
-            np.stack([row[2] for row in rows]) if model_int is not None else None
+
+        masses = np.array(
+            [row[0] for row in rows],
+            dtype=float,
         )
+
+        pure_grid = np.stack(
+            [row[1] for row in rows]
+        )
+
+        int_grid = (
+            np.stack([row[2] for row in rows])
+            if model_int is not None
+            else None
+        )
+
         return masses, pure_grid, int_grid
 
     vlf_m, vlf_grid, _ = extract_grid("VLF")
     scalar_m, scalar_grid, _ = extract_grid("Scalar")
-    zp_m, zp_grid, zp_grid_int = extract_grid("Zprime", "Zprime_int")
-    zp20_m, zp20_grid, zp20_grid_int = extract_grid(
-        "Zprime_20pc", "Zprime_20pc_int"
+
+    zp_m, zp_grid, zp_grid_int = extract_grid(
+        "Zprime",
+        "Zprime_int",
     )
 
-    def fit_grid(masses, pure_grid, max_abs_or_upper, sys_err, int_grid=None):
+    zp20_m, zp20_grid, zp20_grid_int = extract_grid(
+        "Zprime_20pc",
+        "Zprime_20pc_int",
+    )
+
+    # ============================================================
+    # Fit one complete mass grid
+    # ============================================================
+
+    def fit_grid(
+        masses,
+        pure_grid,
+        max_abs_or_upper,
+        sys_err,
+        int_grid=None,
+    ):
+        """
+        Profile the coupling at every discrete mass point.
+
+        The physical objective is the profiled Poisson deviance q.
+
+        During numerical minimization we use
+
+            q_fit = q / (lumi * PB_TO_FB),
+
+        which differs from q only by a positive constant at fixed luminosity.
+
+        In particular, at sys_err = 0 this completely removes the trivial
+        q ∝ luminosity scaling and therefore prevents the numerical optimizer
+        from changing its behaviour as luminosity is varied.
+        """
+
         if masses is None or pure_grid is None or len(masses) == 0:
             return None
 
         signed = int_grid is not None
+
         if signed:
-            lower, upper = -float(max_abs_or_upper), float(max_abs_or_upper)
+            lower = -float(max_abs_or_upper)
+            upper = +float(max_abs_or_upper)
         else:
-            lower, upper = 0.0, float(max_abs_or_upper)
+            lower = 0.0
+            upper = float(max_abs_or_upper)
+
         if upper <= lower:
             raise ValueError("Invalid scale bounds.")
 
-        q_values = np.empty(len(masses), dtype=float)
-        k_values = np.empty(len(masses), dtype=float)
+        # Physical q values and luminosity-normalized q values.
+        q_values = np.full(len(masses), np.inf, dtype=float)
+        q_fit_values = np.full(len(masses), np.inf, dtype=float)
+        k_values = np.full(len(masses), np.nan, dtype=float)
+
         n_obs_fit = n_obs[fit_mask]
         n_sm_fit = n_sm[fit_mask]
 
-        for i, pure in enumerate(pure_grid):
-            interference = int_grid[i] if signed else None
+    
+        fit_normalization = yield_factor
 
-            def objective(k_array):
-                k = float(np.atleast_1d(k_array)[0])
-                signal_xsec = _model_signal(pure, k, interference)
-                n_test = n_sm + signal_xsec * lumi * PB_TO_FB
+
+        N_SCAN = 301
+
+        for i, pure in enumerate(pure_grid):
+
+            interference = (
+                int_grid[i]
+                if signed
+                else None
+            )
+
+            # ----------------------------------------------------
+            # Physical Poisson deviance
+            # ----------------------------------------------------
+
+            def physical_objective(k):
+
+                k = float(np.asarray(k).reshape(-1)[0])
+
+                signal_xsec = _model_signal(
+                    pure,
+                    k,
+                    interference,
+                )
+
+                n_test = n_sm + signal_xsec * yield_factor
                 n_test_fit = n_test[fit_mask]
+
+                if np.any(~np.isfinite(n_test_fit)):
+                    return np.inf
+
                 if np.any(n_test_fit <= 0):
                     return np.inf
+
                 try:
                     q, _, _ = _profiled_poisson_deviance(
                         n_obs_fit,
@@ -680,49 +792,204 @@ def fit_and_assemble_data(
                         frac_syst=sys_err,
                         syst_reference=n_sm_fit,
                     )
-                    return q
+
                 except ValueError:
                     return np.inf
 
-            scan_ks = np.linspace(lower, upper, 301)
-            scan_q = np.array([objective([k]) for k in scan_ks])
-            if not np.any(np.isfinite(scan_q)):
-                q_values[i] = np.inf
-                k_values[i] = np.nan
+                return float(q)
+
+            # ----------------------------------------------------
+            # Numerically normalized objective
+            # ----------------------------------------------------
+
+            def fit_objective(k):
+
+                q = physical_objective(k)
+
+                if not np.isfinite(q):
+                    return np.inf
+
+                return q / fit_normalization
+
+            # ----------------------------------------------------
+            # Coarse global scan
+            # ----------------------------------------------------
+
+            scan_ks = np.linspace(
+                lower,
+                upper,
+                N_SCAN,
+            )
+
+            scan_q = np.array(
+                [fit_objective(k) for k in scan_ks],
+                dtype=float,
+            )
+
+            finite = np.isfinite(scan_q)
+
+            if not np.any(finite):
                 continue
 
-            k0 = float(scan_ks[np.nanargmin(scan_q)])
-            result = minimize(
-                objective,
-                x0=[k0],
-                method="L-BFGS-B",
-                bounds=[(lower, upper)],
-            )
-            if result.success and np.isfinite(result.fun):
-                q_values[i] = float(result.fun)
-                k_values[i] = float(result.x[0])
-            else:
-                best_idx = int(np.nanargmin(scan_q))
-                q_values[i] = float(scan_q[best_idx])
-                k_values[i] = float(scan_ks[best_idx])
+            finite_indices = np.flatnonzero(finite)
 
-        if not np.any(np.isfinite(q_values)):
+            # Always include the global scan minimum.
+            global_scan_idx = finite_indices[
+                np.argmin(scan_q[finite])
+            ]
+
+            candidate_indices = {
+                int(global_scan_idx)
+            }
+
+            # Also collect every local minimum visible in the coarse
+            # scan. This is especially useful for the signed Z' case,
+            # where different coupling branches may exist.
+            for j in finite_indices:
+
+                qj = scan_q[j]
+
+                q_left = (
+                    scan_q[j - 1]
+                    if j > 0
+                    else np.inf
+                )
+
+                q_right = (
+                    scan_q[j + 1]
+                    if j < len(scan_q) - 1
+                    else np.inf
+                )
+
+                if qj <= q_left and qj <= q_right:
+                    candidate_indices.add(int(j))
+
+            # ----------------------------------------------------
+            # Refine every candidate minimum
+            # ----------------------------------------------------
+
+            best_k = np.nan
+            best_q_fit = np.inf
+
+            for j in sorted(candidate_indices):
+
+                # The coarse scan point itself is always a valid
+                # candidate.
+                k_candidate = float(scan_ks[j])
+                q_candidate = float(scan_q[j])
+
+                if q_candidate < best_q_fit:
+                    best_q_fit = q_candidate
+                    best_k = k_candidate
+
+                # Interior minimum with finite neighbours:
+                # refine using a robust bounded 1D minimization.
+                if (
+                    0 < j < len(scan_ks) - 1
+                    and np.isfinite(scan_q[j - 1])
+                    and np.isfinite(scan_q[j + 1])
+                ):
+
+                    local_left = float(scan_ks[j - 1])
+                    local_right = float(scan_ks[j + 1])
+
+                    result = minimize_scalar(
+                        fit_objective,
+                        bounds=(local_left, local_right),
+                        method="bounded",
+                        options={
+                            "xatol": 1e-10,
+                            "maxiter": 500,
+                        },
+                    )
+
+                    if (
+                        result.success
+                        and np.isfinite(result.fun)
+                        and result.fun < best_q_fit
+                    ):
+                        best_q_fit = float(result.fun)
+                        best_k = float(result.x)
+
+            if not np.isfinite(best_k):
+                continue
+
+            # ----------------------------------------------------
+            # Recompute and store the physical q
+            # ----------------------------------------------------
+
+            best_q_physical = physical_objective(best_k)
+
+            if not np.isfinite(best_q_physical):
+                continue
+
+            k_values[i] = best_k
+            q_values[i] = best_q_physical
+            q_fit_values[i] = best_q_fit
+
+        # ========================================================
+        # Select the best discrete mass
+        # ========================================================
+
+        finite_masses = np.isfinite(q_fit_values)
+
+        if not np.any(finite_masses):
             return None
-        idx = int(np.nanargmin(q_values))
+
+        idx = int(
+            np.nanargmin(q_fit_values)
+        )
+
+        # Use the normalized likelihood profile for the parabolic
+        # interpolation. Multiplying q by luminosity can then never
+        # alter the diagnostic continuous mass estimate.
+        continuous_m = _parabolic_mass_estimate(
+            masses,
+            q_fit_values,
+            idx,
+        )
+
         return {
             "snap_m": float(masses[idx]),
-            "continuous_m": _parabolic_mass_estimate(masses, q_values, idx),
+            "continuous_m": float(continuous_m),
             "scale_factor": float(k_values[idx]),
+
+            # Physical likelihood-ratio statistic
             "min_q": float(q_values[idx]),
-            "grid_masses": masses,
-            "grid_q": q_values,
-            "grid_scale": k_values,
+
+            # Complete profiles
+            "grid_masses": masses.copy(),
+            "grid_q": q_values.copy(),
+            "grid_q_fit": q_fit_values.copy(),
+            "grid_scale": k_values.copy(),
         }
 
+    # ============================================================
+    # Model definitions
+    # ============================================================
+
     model_specs = {
-        "VLF": (vlf_m, vlf_grid, None, vlf_max_scale),
-        "Scalar": (scalar_m, scalar_grid, None, scalar_max_scale),
-        "Zprime": (zp_m, zp_grid, zp_grid_int, zprime_max_abs_scale),
+        "VLF": (
+            vlf_m,
+            vlf_grid,
+            None,
+            vlf_max_scale,
+        ),
+
+        "Scalar": (
+            scalar_m,
+            scalar_grid,
+            None,
+            scalar_max_scale,
+        ),
+
+        "Zprime": (
+            zp_m,
+            zp_grid,
+            zp_grid_int,
+            zprime_max_abs_scale,
+        ),
+
         "Zprime_20pc": (
             zp20_m,
             zp20_grid,
@@ -731,31 +998,77 @@ def fit_and_assemble_data(
         ),
     }
 
-    # Parse the nominal fake mass only for reporting.
-    fake_mass_match = re.search(r"_(\d+(?:\.\d+)?)$", fake_data_key)
-    fake_mass = float(fake_mass_match.group(1)) if fake_mass_match else np.nan
+    # ============================================================
+    # Nominal fake-data mass
+    # ============================================================
+
+    fake_mass_match = re.search(
+        r"_(\d+(?:\.\d+)?)$",
+        fake_data_key,
+    )
+
+    fake_mass = (
+        float(fake_mass_match.group(1))
+        if fake_mass_match
+        else np.nan
+    )
+
+    # ============================================================
+    # Perform fits for each systematic uncertainty
+    # ============================================================
 
     output = {}
+
     for sys_err in map(float, sys_err_list):
+
         print("\n" + "=" * 60)
         print(f"Fitting observable: {observable}")
+
         print(
-            f"Analysis range: {analysis_min:g} <= {observable} < {analysis_max:g} GeV"
+            f"Analysis range: "
+            f"{analysis_min:g} <= {observable} < {analysis_max:g} GeV"
         )
-        print(f"Systematic error: {100.0 * sys_err:.1f}%")
+
+        print(
+            f"Systematic error: "
+            f"{100.0 * sys_err:.1f}%"
+        )
+
         print("=" * 60)
 
         best_fits = {}
-        for model_name, (masses, pure_grid, int_grid, bound) in model_specs.items():
-            result = fit_grid(masses, pure_grid, bound, sys_err, int_grid)
+
+        for model_name, (
+            masses,
+            pure_grid,
+            int_grid,
+            bound,
+        ) in model_specs.items():
+
+            result = fit_grid(
+                masses,
+                pure_grid,
+                bound,
+                sys_err,
+                int_grid,
+            )
+
             if result is None:
                 continue
+
             best_fits[model_name] = result
+
             print(
-                f"{model_name:12s}: grid mass = {result['snap_m']:.1f} GeV | "
+                f"{model_name:12s}: "
+                f"grid mass = {result['snap_m']:.1f} GeV | "
                 f"parabolic estimate = {result['continuous_m']:.1f} GeV | "
-                f"scale = {result['scale_factor']:.6g} | min q = {result['min_q']:.3f}"
+                f"scale = {result['scale_factor']:.8g} | "
+                f"min q = {result['min_q']:.6g}"
             )
+
+        # ========================================================
+        # Fake-data entry
+        # ========================================================
 
         best_fits["FakeData"] = {
             "snap_m": fake_mass,
@@ -763,46 +1076,97 @@ def fit_and_assemble_data(
             "scale_factor": fake_scale,
             "min_q": 0.0,
         }
+
         print(
-            f"{'FakeData':12s}: nominal mass = {fake_mass:.1f} GeV | "
-            f"scale = {fake_scale:.6g}"
+            f"{'FakeData':12s}: "
+            f"nominal mass = {fake_mass:.1f} GeV | "
+            f"scale = {fake_scale:.8g}"
         )
+
         print(
             "Synthetic signal yield in fit window: "
             f"{np.sum(n_fake[fit_mask], dtype=np.float64):.2f} events"
         )
 
-        fitted_hists = {"SM": h_sm.copy()}
-        fitted_hists["FakeData"] = (fake_scale**2) * h_fake_pure
+        # ========================================================
+        # Construct best-fit cross-section histograms
+        # ========================================================
+
+        fitted_hists = {
+            "SM": h_sm.copy()
+        }
+
+        # Fake data
+        fitted_hists["FakeData"] = (
+            fake_scale**2
+        ) * h_fake_pure
+
         fitted_hists["FakeData_int"] = (
             fake_scale * h_fake_int
             if fake_uses_interference
             else np.zeros_like(h_fake_pure)
         )
 
+        # Fitted hypotheses
         for model_name, fit in best_fits.items():
-            if model_name == "FakeData" or model_name not in model_specs:
+
+            if (
+                model_name == "FakeData"
+                or model_name not in model_specs
+            ):
                 continue
-            masses, pure_grid, int_grid, _ = model_specs[model_name]
-            mass_index = int(np.argmin(np.abs(masses - fit["snap_m"])))
+
+            masses, pure_grid, int_grid, _ = (
+                model_specs[model_name]
+            )
+
+            mass_index = int(
+                np.argmin(
+                    np.abs(
+                        masses - fit["snap_m"]
+                    )
+                )
+            )
+
             k = fit["scale_factor"]
-            fitted_hists[model_name] = (k**2) * pure_grid[mass_index]
+
+            fitted_hists[model_name] = (
+                k**2
+            ) * pure_grid[mass_index]
+
             if int_grid is not None:
-                fitted_hists[f"{model_name}_int"] = k * int_grid[mass_index]
+
+                fitted_hists[
+                    f"{model_name}_int"
+                ] = (
+                    k
+                    * int_grid[mass_index]
+                )
+
+        # ========================================================
+        # Save output
+        # ========================================================
 
         output[sys_err] = {
             "hists": fitted_hists,
             "best_fits": best_fits,
             "bins": bins.copy(),
             "observable": observable,
-            "analysis_range": (analysis_min, analysis_max),
-            # Legacy alias retained for notebooks that still read this key.
-            "fit_window": (analysis_min, analysis_max),
+            "analysis_range": (
+                analysis_min,
+                analysis_max,
+            ),
+
+            # Legacy alias
+            "fit_window": (
+                analysis_min,
+                analysis_max,
+            ),
+
             "workspace_file": workspace_file,
         }
 
     return output
-
 
 # ============================================================================
 # Kinematics and LHE parsing
