@@ -1,0 +1,63 @@
+#######################################
+# Order of execution of various modules
+#######################################
+
+set ExecutionPath {
+  ParticlePropagator
+  TopFilter
+  TreeWriter
+}
+
+#################################
+# Propagate particles in cylinder
+#################################
+
+module ParticlePropagator ParticlePropagator {
+  set InputArray Delphes/stableParticles
+
+  set OutputArray stableParticles
+  set ChargedHadronOutputArray chargedHadrons
+  set ElectronOutputArray electrons
+  set MuonOutputArray muons
+
+  # radius of the magnetic field coverage, in m
+  set Radius 1.29
+  # half-length of the magnetic field coverage, in m
+  set HalfLength 3.00
+
+  # magnetic field
+  set Bz 3.8
+}
+
+module BSMFilter TopFilter {
+
+  set InputArray Delphes/allParticles
+  set OutputArray topParticles
+  set MothersArray mothers
+  set FinalDaughtersArray finalDaughters  
+  set DirectDaughtersArray directDaughters
+  set PTMin 0.0
+  set massMin 50.0
+  
+  # Select sleptons
+  add PdgCode {6}
+  add PdgCode {-6}
+}
+
+##################
+# ROOT tree writer
+##################
+
+# tracks, towers and eflow objects are not stored by default in the output.
+# if needed (for jet constituent or other studies), uncomment the relevant
+# "add Branch ..." lines.
+
+module TreeWriter TreeWriter {
+# add Branch InputArray BranchName BranchClass
+#  add Branch Delphes/allParticles Particle GenParticle
+
+#  add Branch TopFilter/finalDaughters topFinalDaughters GenParticle
+  add Branch TopFilter/directDaughters topDirectDaughters GenParticle
+  add Branch TopFilter/mothers topMothers GenParticle 
+
+}

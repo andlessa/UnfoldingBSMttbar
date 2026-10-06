@@ -29,9 +29,33 @@ if echo "$answer" | grep -iq "^y" ;then
 	cd $homeDIR
 	cd ./MG5;
 	echo "[installer] installing LHAPDF6, HepMC and Collier"
-        echo "install hepmc\ninstall lhapdf6\ninstall collier\nexit\n" > mad_install.txt;
+        echo -e "install hepmc\ninstall lhapdf6\ninstall pythia8\ninstall collier\nexit\n" > mad_install.txt;
 	./bin/mg5_aMC -f mad_install.txt
 	cd $homeDIR
 	sed  "s|homeDIR|$homeDIR|g" mg5_configuration.txt > ./MG5/input/mg5_configuration.txt;
 fi
-cd $currentDIR
+cd $homeDIR
+
+echo -n "Install DelphesLLP (y/n)? "
+read answer
+if echo "$answer" | grep -iq "^y" ;then
+# Check if pythia8 has been installed under MadGraph5
+  pythiaDir=$homeDIR/MG5/HEPTools/pythia8 
+  if [ ! -d "$pythiaDir" ]; then
+    echo "Delphes should be installed after hepmc, lhapdf6 and pythia8 were installed in MadGraph."
+    exit
+  fi
+  echo "[installer] Installing DelphesLLP";
+  if [ ! -f "DelphesLLP.tar.gz" ]; then
+     echo "[installer] Trying to downloading DelphesLLP.tar.gz from https://github.com/llprecasting/recastingCodes"
+     wget https://github.com/llprecasting/recastingCodes/raw/refs/heads/main/Delphes_LLP/DelphesLLP.tar.gz
+  fi   
+  tar -zxf DelphesLLP.tar.gz;
+  cd DelphesLLP;
+  export PYTHIA8=$pythiaDir;
+  make HAS_PYTHIA8=true;
+  cd $homeDIR;
+  rm DelphesLLP.tar.gz;
+fi
+
+
