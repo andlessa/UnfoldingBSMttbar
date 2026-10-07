@@ -1411,6 +1411,56 @@ def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1
     return pd.DataFrame(data)
 
 
+def read_root_features(rootTree, max_events=None):
+
+    nevts = rootTree.GetEntries()
+    if max_events is not None and int(max_events) > 0:
+        nevts = min(nevts, int(max_events))
+    
+    data = {
+                "weight": [],
+                "m_t": [],
+                "m_tbar": [],
+                "m_tt": [],
+                "pt_t": [],
+                "pt_tbar": [],
+                "pt_tt": [],
+                "y_t": [],
+                "y_tbar": [],
+                "y_tt": [],
+                # "abs_delta_y": [],
+                # "cos_theta_star": [],
+                # "abs_cos_theta_star": [],
+                # "ptj1": [],
+            }
+    for ievt in range(nevts):        
+        rootTree.GetEntry(ievt)
+        t = [top for top in rootTree.topMothers if top.PID == 6]
+        tbar = [top for top in rootTree.topMothers if top.PID == -6]
+        if len(t) != 1:
+            raise ValueError(f"Expected 1 top quark, found {len(t)}")
+        else:
+            t = t[0]
+        if len(tbar) != 1:
+            raise ValueError(f"Expected 1 anti-top quark, found {len(tbar)}")
+        else:
+            tbar = tbar[0]
+        ttbar = t.P4() + tbar.P4()
+        data["m_t"].append(t.Mass)
+        data["m_tbar"].append(tbar.Mass)
+        data["m_tt"].append(ttbar.M())
+        data["pt_t"].append(t.PT)
+        data["pt_tbar"].append(tbar.PT)
+        data["pt_tt"].append(ttbar.Pt())
+        data["y_t"].append(t.Eta)
+        data["y_tbar"].append(tbar.Eta)
+        data["y_tt"].append(ttbar.Rapidity())
+        data["weight"].append(rootTree.Event.At(0).Weight)
+
+    root_features = pd.DataFrame(data)
+
+    return root_features
+
 def _parse_summary_cross_section(summary_path: str) -> float | None:
     """Extract the preferred cross section from a MadGraph ``summary.txt``."""
     try:

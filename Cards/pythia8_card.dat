@@ -1,20 +1,62 @@
+! ==================
+! General parameters 
+! ==================
+!
+Main:numberOfEvents      = 50000
+!
+! -------------------------------------------------------------------
+! Specify the HEPMC output of the Pythia8 shower. You can set it to:
+!   hepmc       : MG5aMC will automatically place it the run_<i> directory
+!   hepmc.gz    : Same as 'hepmc', but also will compress the output file.
+!   hepmcremove : MG5aMC will automatically remove the file at the end of the run.
+!                 (usefull when running with Delphes)
+!   hepmc@<hepmc_path> :
+!                 User defined path where the HEPMC file must written. It will
+!                 therefore not be placed in the run_<i> directory. The
+!                 specified path, if not absolute, will be relative to
+!                 the Event/run_<i> directory of the process output.
+!   /dev/null : to turn off the HEPMC output.
+!   fifo      : to have MG5aMC setup the piping of the PY8 output to 
+!               analysis tools such as MadAnalysis5.  
+!   fifo@<fifo_path> :
+!               Same as 'fifo', but selecting a custom path to create the
+!               fifo pipe. (useful to select a mounted drive that supports 
+!               fifo). Note that the fifo file extension *must* be '.hepmc.fifo'.
+! -------------------------------------------------------------------
+!
+!Main:HepMC=on
+!HepMC:output= mHe_800GeV_ms_0.1GeV_y_6.0e-08_pythia8_events.hepmc
+!
+! --------------------------------------------------------------------
+! Parameters relevant only when performing MLM merging, which can be
+! turned on by setting ickkw to '1' in the run_card and chosing a 
+! positive value for the parameter xqcut.
+! For details, see section 'Jet Matching' on the left-hand menu of 
+!    http://home.thep.lu.se/~torbjorn/pythia81html/Welcome.html
+! --------------------------------------------------------------------
+! If equal to -1.0, MadGraph5_aMC@NLO will set it automatically based 
+! on the parameter 'xqcut' of the run_card.dat 
+JetMatching:qCut         = 3.0000000000e+02
+! Use default kt-MLM to match parton level jets to those produced by the
+! shower. But the other Shower-kt scheme is available too with this option.
+JetMatching:doShowerKt   = off
+! A value of -1 means that it is automatically guessed by MadGraph.
+! It is however always safer to explicitly set it.
+JetMatching:nJetMax      = 1
 
-Main:numberOfEvents      = -1
-Init:showChangedSettings = on     ! list changed settings
-Init:showChangedParticleData = off ! list changed particle data
-Init:showProcesses = on
-Init:showMultipartonInteractions = off
-Next:numberCount = 15000             ! print message every n events
-Next:numberShowInfo = 1            ! print event information n times
-Next:numberShowProcess = 1         ! print process record n times
-Next:numberShowEvent = 1           ! print event record n times
-Next:numberShowLHA  = 0
-Stat:showProcessLevel = on
-Stat:showErrors = on
-Check:epTolErr = 1.00e-2
-Main:timesAllowErrors = 100
-Next:numberShowInfo = 1            ! print event information n times
-Next:numberShowProcess = 1         ! print process record n times
-Next:numberShowEvent = 1           ! print event record n times
-Tune:pp = 21 ! A14 tune with NNPDF2.3LO
+Beams:frameType=4
+! This parameter is automatically set to True by MG5aMC when doing MLM merging with PY8.
+Beams:setProductionScalesFromLHEF=on
+! 1.0 corresponds to HEPMC weight given in [mb]. We choose here the [pb] normalization.
+! Be more forgiving with momentum mismatches.
+Check:epTolErr=1.0000000000e-02
+JetMatching:etaJetMax=1.0000000000e+03
+! Specifiy if we are merging sample of different multiplicity.
+JetMatching:merge=on
+JetMatching:scheme=1
+! Specify one must read inputs from the MadGraph banner.
+JetMatching:setMad=off
+JetMatching:coneRadius=1.0000000000e+00
+JetMatching:nQmatch=4
+Beams:LHEF = <lhe.gz file>
 

@@ -5,6 +5,7 @@
 set ExecutionPath {
   ParticlePropagator
   TopFilter
+  PDGFilter
   TreeWriter
 }
 
@@ -27,6 +28,18 @@ module ParticlePropagator ParticlePropagator {
 
   # magnetic field
   set Bz 3.8
+}
+
+#################
+# PDG filter
+#################
+
+module PdgCodeFilter PDGFilter {
+  set InputArray Delphes/allParticles
+  set OutputArray particles
+  set Invert true
+  add PdgCode {6}
+  add PdgCode {-6}
 }
 
 module BSMFilter TopFilter {
@@ -59,5 +72,5 @@ module TreeWriter TreeWriter {
 #  add Branch TopFilter/finalDaughters topFinalDaughters GenParticle
   add Branch TopFilter/directDaughters topDirectDaughters GenParticle
   add Branch TopFilter/mothers topMothers GenParticle 
-
+  add Branch PDGFilter/particles allTops GenParticle
 }

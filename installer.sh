@@ -52,6 +52,7 @@ if echo "$answer" | grep -iq "^y" ;then
   fi   
   tar -zxf DelphesLLP.tar.gz;
   cd DelphesLLP;
+  rm -rf .git
   export PYTHIA8=$pythiaDir;
   make HAS_PYTHIA8=true;
   cd $homeDIR;
