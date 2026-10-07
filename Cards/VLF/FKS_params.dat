@@ -70,8 +70,7 @@
 ! Selects all contribution factorizing \alpha_s^2 and \alpha_s * \alpha.
 !
 #SelectedCouplingOrders
-2
-2 0 0 4 0
+1
 0 0 0 4 0
 ! Default ::
 ! 0
