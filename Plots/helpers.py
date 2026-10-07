@@ -1338,6 +1338,8 @@ def parse_event_block(lines, rescale_weight_by=1.0):
         "m_tt": mass(*tt4),
         "pt_t": pt(top["px"], top["py"]),
         "pt_tbar": pt(antitop["px"], antitop["py"]),
+        "pt_1": max(pt(top["px"], top["py"]), pt(antitop["px"], antitop["py"])),
+        "pt_2": min(pt(antitop["px"], antitop["py"]),pt(top["px"], top["py"])),
         "pt_tt": pt(tt4[1], tt4[2]),
         "y_t": y_top,
         "y_tbar": y_antitop,
@@ -1371,6 +1373,8 @@ def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1
         "m_tt": [],
         "pt_t": [],
         "pt_tbar": [],
+        "pt_1": [],
+        "pt_2": [],
         "pt_tt": [],
         "y_t": [],
         "y_tbar": [],
@@ -1424,6 +1428,8 @@ def read_root_features(rootTree, max_events=None):
                 "m_tt": [],
                 "pt_t": [],
                 "pt_tbar": [],
+                "pt_1": [],
+                "pt_2": [],
                 "pt_tt": [],
                 "y_t": [],
                 "y_tbar": [],
@@ -1451,6 +1457,8 @@ def read_root_features(rootTree, max_events=None):
         data["m_tt"].append(ttbar.M())
         data["pt_t"].append(t.PT)
         data["pt_tbar"].append(tbar.PT)
+        data["pt_1"].append(max(t.PT, tbar.PT))
+        data["pt_2"].append(min(tbar.PT, t.PT))        
         data["pt_tt"].append(ttbar.Pt())
         data["y_t"].append(t.Eta)
         data["y_tbar"].append(tbar.Eta)
