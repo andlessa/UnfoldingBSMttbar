@@ -53,34 +53,34 @@ c      double precision mtt_bias_enhancement_power
       if (mtt.gt.0.0d0) then
           peak_loc = 2.05 * mdl_mst
           if (peak_loc.gt.2900.0d0) then
-             bound_1 = (3510.0d0/3075.0d0) * peak_loc 
-             bound_2 = (3770.0d0/3075.0d0) * peak_loc
-             den_1 = peak_loc
-             den_2 = peak_loc
-             den_3 = (3207.0d0/3075.0d0) * peak_loc
+             bound_1 = (1000.0d0/3075.0d0) * peak_loc 
+             bound_2 = (3700.0d0/3690.0d0) * peak_loc
+             den_1 = 1.3d0 * peak_loc
+             den_2 = 0.67d0 * peak_loc
+             den_3 = (2400.0d0/3075.0d0) * peak_loc
              if (mtt.lt.bound_1) then
-                bias_wgt = (mtt/den_1)**3.3
+                bias_wgt = (mtt/den_1)**2.0
+             else if (mtt.lt.bound_2) then
+                bias_wgt = (mtt/den_2)**5.0
+             else
+                bias_wgt = (mtt/den_3)**10.0
+             endif
+          else
+             bound_1 = (1600.0d0/1500.0d0) * peak_loc 
+             bound_2 = (1800.0d0/1500.0d0) * peak_loc
+             den_1 = bound_2
+             den_2 = peak_loc
+             if (mdl_mst.lt.625.0d0) then
+                den_3 = (1150.0d0/1050.0d0) * peak_loc
+             else
+                den_3 = (1550.0d0/1500.0d0) * peak_loc
+             endif
+             if (mtt.lt.bound_1) then
+                bias_wgt = (mtt/den_1)**3.0
              else if (mtt.lt.bound_2) then
                 bias_wgt = (mtt/den_2)**2.0
              else
                 bias_wgt = (mtt/den_3)**8.0
-             endif
-          else
-             bound_1 =  (800.0d0/2050.0d0) * peak_loc 
-             bound_2 = (1600.0d0/1500.0d0) * peak_loc
-             den_1 = (1300.0d0/1500.0d0) * peak_loc
-             den_2 = (1250.0d0/1500.0d0) *peak_loc
-             if (mdl_mst.lt.625.0d0) then
-                den_3 = (1150.0d0/1050.0d0) * peak_loc
-             else
-                den_3 = (1400.0d0/1500.0d0) * peak_loc
-             endif
-             if (mtt.lt.bound_1) then
-                bias_wgt = (mtt/den_1)**5.0
-             else if (mtt.lt.bound_2) then
-                bias_wgt = (mtt/den_2)**6.0
-             else
-                bias_wgt = (mtt/den_3)**9.0
              endif
           endif
       endif

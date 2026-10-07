@@ -43,7 +43,7 @@
 #***********************************************************************
 # Number of points per itegration channel (ignored for aMC@NLO runs)   *
 #***********************************************************************
- 0.0009   = req_acc_FO       ! Required accuracy (-1=ignored, and use the 
+ 0.0013   = req_acc_FO       ! Required accuracy (-1=ignored, and use the 
  	                   ! number of points and iter. below)
 # These numbers are ignored except if req_acc_FO is equal to -1
  5000   = npoints_FO_grid  ! number of points to setup grids
@@ -128,7 +128,7 @@
 #***********************************************************************
 #  Customization of the code. List of files containing user hook function 
 #***********************************************************************
- ../Source/mtt_bias_NLO.f = custom_fcts ! List of files containing user hook function
+  ../Source/mtt_bias_NLO.f = custom_fcts ! List of files containing user hook function
 #***********************************************************************
 # ickkw parameter:                                                     *
 #   0: No merging                                                      *
