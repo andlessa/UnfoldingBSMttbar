@@ -1338,8 +1338,6 @@ def parse_event_block(lines, rescale_weight_by=1.0):
         "m_tt": mass(*tt4),
         "pt_t": pt(top["px"], top["py"]),
         "pt_tbar": pt(antitop["px"], antitop["py"]),
-        "pt_1": max(pt(top["px"], top["py"]), pt(antitop["px"], antitop["py"])),
-        "pt_2": min(pt(antitop["px"], antitop["py"]),pt(top["px"], top["py"])),
         "pt_tt": pt(tt4[1], tt4[2]),
         "y_t": y_top,
         "y_tbar": y_antitop,
@@ -1373,8 +1371,6 @@ def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1
         "m_tt": [],
         "pt_t": [],
         "pt_tbar": [],
-        "pt_1": [],
-        "pt_2": [],
         "pt_tt": [],
         "y_t": [],
         "y_tbar": [],
@@ -1414,60 +1410,6 @@ def read_lhe_features(filepath, label=None, max_events=None, rescale_weight_by=1
 
     return pd.DataFrame(data)
 
-
-def read_root_features(rootTree, max_events=None):
-
-    nevts = rootTree.GetEntries()
-    if max_events is not None and int(max_events) > 0:
-        nevts = min(nevts, int(max_events))
-    
-    data = {
-                "weight": [],
-                "m_t": [],
-                "m_tbar": [],
-                "m_tt": [],
-                "pt_t": [],
-                "pt_tbar": [],
-                "pt_1": [],
-                "pt_2": [],
-                "pt_tt": [],
-                "y_t": [],
-                "y_tbar": [],
-                "y_tt": [],
-                # "abs_delta_y": [],
-                # "cos_theta_star": [],
-                # "abs_cos_theta_star": [],
-                # "ptj1": [],
-            }
-    for ievt in range(nevts):        
-        rootTree.GetEntry(ievt)
-        t = [top for top in rootTree.topMothers if top.PID == 6]
-        tbar = [top for top in rootTree.topMothers if top.PID == -6]
-        if len(t) != 1:
-            raise ValueError(f"Expected 1 top quark, found {len(t)}")
-        else:
-            t = t[0]
-        if len(tbar) != 1:
-            raise ValueError(f"Expected 1 anti-top quark, found {len(tbar)}")
-        else:
-            tbar = tbar[0]
-        ttbar = t.P4() + tbar.P4()
-        data["m_t"].append(t.Mass)
-        data["m_tbar"].append(tbar.Mass)
-        data["m_tt"].append(ttbar.M())
-        data["pt_t"].append(t.PT)
-        data["pt_tbar"].append(tbar.PT)
-        data["pt_1"].append(max(t.PT, tbar.PT))
-        data["pt_2"].append(min(tbar.PT, t.PT))        
-        data["pt_tt"].append(ttbar.Pt())
-        data["y_t"].append(t.Eta)
-        data["y_tbar"].append(tbar.Eta)
-        data["y_tt"].append(ttbar.Rapidity())
-        data["weight"].append(rootTree.Event.At(0).Weight)
-
-    root_features = pd.DataFrame(data)
-
-    return root_features
 
 def _parse_summary_cross_section(summary_path: str) -> float | None:
     """Extract the preferred cross section from a MadGraph ``summary.txt``."""
@@ -1579,7 +1521,6 @@ def load_lhe_with_corrections(
     file_pattern,
     label=None,
     is_nlo=False,
-    custom_rescale=1.0,
     max_events=None,
     *,
     combine="sum",
@@ -1600,8 +1541,6 @@ def load_lhe_with_corrections(
         Label stored in the output DataFrame.
     is_nlo : bool
         If true, prefer the cross section in ``summary.txt``.
-    custom_rescale : float
-        Additional multiplicative factor applied after metadata normalization.
     max_events : int, optional
         Read only the first N valid ttbar events from each file. The retained
         subset is still normalized to the full metadata cross section, so this
@@ -1645,24 +1584,17 @@ def load_lhe_with_corrections(
 
         raw_sum = float(frame["weight"].sum())
         target_xsec = float(info["xsec_true"])
-        if target_xsec > 0:
-            if np.isclose(raw_sum, 0.0, atol=1e-30):
-                raise ValueError(
-                    f"Cannot normalize {path}: sum of retained event weights is zero."
-                )
-            factor = target_xsec / raw_sum
-            frame.loc[:, "weight"] *= factor
-            print(
-                f"  -> {os.path.basename(path)}: normalized sum(weights) "
-                f"from {raw_sum:.6e} to {target_xsec:.6e} pb"
+        if np.isclose(raw_sum, 0.0, atol=1e-30):
+            raise ValueError(
+                f"Cannot normalize {path}: sum of retained event weights is zero."
             )
-        else:
-            print(
-                f"  -> Warning: no valid cross section metadata for {path}; "
-                "raw event weights are retained."
-            )
+        factor = target_xsec / raw_sum
+        frame.loc[:, "weight"] *= factor
+        print(
+            f"  -> {os.path.basename(path)}: normalized sum(weights) "
+            f"from {raw_sum:.6e} to {target_xsec:.6e} pb"
+        )
 
-        frame.loc[:, "weight"] *= float(custom_rescale)
         frames.append(frame)
 
     if not frames:
