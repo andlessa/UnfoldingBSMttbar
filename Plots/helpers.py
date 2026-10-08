@@ -1498,9 +1498,50 @@ def _parse_summary_cross_section(summary_path: str) -> float | None:
                 value = float(match.group(1))
             except ValueError:
                 continue
-            if value >= 0:
+            if not np.isnan(value):
                 return value
     return None
+
+
+def _scan_lhe_metadata(filepath):
+    """Return (subprocess cross sections, number of events) for an LHE file.
+
+    The ``<init>`` block is parsed from the file header and events are counted
+    with a chunked byte scan, avoiding any full parsing or temporary copy.
+    """
+    opener = gzip.open if str(filepath).endswith(".gz") else open
+    xsecs = []
+    with opener(filepath, "rb") as source:
+        in_init = False
+        header = []
+        for raw in source:
+            stripped = raw.strip()
+            if stripped.startswith(b"<init>"):
+                in_init = True
+            elif in_init and stripped.startswith(b"</init>"):
+                break
+            elif in_init:
+                header.append(stripped)
+            elif stripped.startswith(b"<event"):
+                break
+        if header:
+            nproc = int(header[0].split()[9])
+            for line in header[1 : 1 + nproc]:
+                xsecs.append(float(line.split()[0].replace(b"D", b"E")))
+    return xsecs
+    # count = 0
+    # tail = b""
+    # with opener(filepath, "rb") as source:
+    #     while True:
+    #         chunk = source.read(1 << 24)
+    #         if not chunk:
+    #             break
+    #         data = tail + chunk
+    #         count += len(re.findall(rb"<event[\s>]", data))
+    #         tail = data[-8:]
+    #         # Avoid double counting a tag fully contained in the kept tail.
+    #         count -= len(re.findall(rb"<event[\s>]", tail))
+    # return xsecs, count
 
 
 def get_run_metadata(filepath, is_nlo=False):
@@ -1512,65 +1553,22 @@ def get_run_metadata(filepath, is_nlo=False):
 
     Multiple subprocess entries in the LHE initialization block are summed.
     """
-    if pylhe is None:
-        raise ImportError(
-            "get_run_metadata requires the optional 'pylhe' package. "
-            "Install pylhe to use LHE metadata normalization."
-        )
-
     run_dir = os.path.dirname(filepath)
-    info = {"nevents": -1, "xsec_lhe": -1.0, "xsec_true": -1.0}
+    info = {"xsec_lhe": -1.0, "xsec_true": -1.0}
 
-    fd, temporary_lhe = tempfile.mkstemp(suffix=".lhe")
-    os.close(fd)
-    opener = gzip.open if str(filepath).endswith(".gz") else open
     try:
-        with opener(filepath, "rt", encoding="utf-8", errors="ignore") as source, open(
-            temporary_lhe, "w", encoding="utf-8"
-        ) as target:
-            for line in source:
-                # Keep the historical workaround for malformed MadGraph banner
-                # lines containing the word "generate".
-                if "generate" not in line:
-                    target.write(line)
-
-        init_block = pylhe.read_lhe_init(temporary_lhe)
-        proc_info = init_block.get("procInfo", [])
-        xsecs = [float(proc["xSection"]) for proc in proc_info if "xSection" in proc]
+        xsecs = _scan_lhe_metadata(filepath)
         if xsecs:
             info["xsec_lhe"] = float(np.sum(xsecs))
             info["xsec_true"] = info["xsec_lhe"]
-        info["nevents"] = int(pylhe.read_num_events(temporary_lhe))
+        # info["nevents"] = nevents
     except Exception as exc:
         print(f"Error parsing LHE metadata from {os.path.basename(filepath)}: {exc}")
-    finally:
-        if os.path.exists(temporary_lhe):
-            os.remove(temporary_lhe)
 
     if is_nlo:
         summary_value = _parse_summary_cross_section(os.path.join(run_dir, "summary.txt"))
         if summary_value is not None:
             info["xsec_true"] = summary_value
-
-    if info["nevents"] <= 0:
-        banners = sorted(glob.glob(os.path.join(run_dir, "*banner*txt")))
-        if banners:
-            banner_text = open(
-                banners[0], "r", encoding="utf-8", errors="ignore"
-            ).read()
-            block_match = re.search(
-                r"<MGGenerationInfo>(.*?)</MGGenerationInfo>",
-                banner_text,
-                flags=re.DOTALL,
-            )
-            if block_match:
-                count_match = re.search(
-                    r"(?:Number\s+of\s+Events|nevents)\s*[:=]\s*(\d+)",
-                    block_match.group(1),
-                    flags=re.IGNORECASE,
-                )
-                if count_match:
-                    info["nevents"] = int(count_match.group(1))
 
     return info
 
@@ -1580,8 +1578,8 @@ def load_lhe_with_corrections(
     label=None,
     is_nlo=False,
     max_events=None,
-    *,
     combine="sum",
+    rescale_weight_by=1.0
 ):
     """Load LHE files and normalize each sample to its metadata cross section.
 
@@ -1647,7 +1645,7 @@ def load_lhe_with_corrections(
                 f"Cannot normalize {path}: sum of retained event weights is zero."
             )
         factor = target_xsec / raw_sum
-        frame.loc[:, "weight"] *= factor
+        frame.loc[:, "weight"] *= factor*rescale_weight_by
         print(
             f"  -> {os.path.basename(path)}: normalized sum(weights) "
             f"from {raw_sum:.6e} to {target_xsec:.6e} pb"
