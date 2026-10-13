@@ -44,6 +44,8 @@ import tempfile
 import urllib.request
 from collections.abc import Mapping
 from urllib.parse import urljoin, urlparse
+import itertools
+from scipy.interpolate import  griddata
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
@@ -61,8 +63,8 @@ SQRT_S = 13_000.0  # proton-proton centre-of-mass energy, GeV
 PB_TO_FB = 1000.0
 DEFAULT_FAKE_SCALES = {
     "Scalar_1500": 7.5,
-    "VLF_1500": 3.5,
-    "Zprime_3000": -4.0,
+    "VLF_1500": 3.8,
+    "Zprime_3000": -4.4,
 }
 
 # Default likelihood/significance windows for observables that have an agreed
@@ -2704,3 +2706,69 @@ def plot_lumi_syst_combined(
     if show:
         plt.show()
     return fig, ax
+
+
+def interpolateData(x,y,z,nx=200,ny=200,method='linear',fill_value=np.nan,xnew=None,ynew=None):
+
+    if x.min() == x.max() or y.min() == y.max(): # Can not interpolate
+        return None,None,None
+    elif xnew is None or ynew is None:
+        xnew = np.linspace(x.min(),x.max(),nx)
+        ynew = np.linspace(y.min(),y.max(),ny)
+
+    xi = np.array([list(v) for v in itertools.product(xnew,ynew)])
+    znew = griddata(list(zip(x,y)),z,xi=xi, 
+                    method=method,fill_value=fill_value)
+    znew = np.reshape(znew,(len(xnew),len(ynew)))
+    xnew,ynew  = np.meshgrid(xnew,ynew,indexing='ij')
+
+    return xnew,ynew,znew
+
+def getContours(x, y, z, contourValues):
+    # Generate contours
+    contours = plt.contour(x, y, z, contourValues)
+    plt.close() # Close the figure to prevent it from displaying
+
+    contoursDict = {}
+
+    # Iterate through the contour levels using .allsegs
+    # contours.allsegs is a list of length len(contourValues)
+    # Each element is a list of polygon segments for that level
+    for i, segs in enumerate(contours.allsegs):
+        cV = contourValues[i]
+        
+        # Collect all vertices for this contour level
+        xData = []
+        yData = []
+        
+        for poly in segs:
+            # poly is an (N, 2) array of vertices for one segment
+            xData.extend(poly[:, 0])
+            yData.extend(poly[:, 1])
+        
+        if len(xData) == 0:
+            continue
+            
+        contoursDict[cV] = np.array(list(zip(xData, yData)))
+    
+    return contoursDict
+
+def saveContours(contoursDict,fname,header):
+
+    with open(fname,'w') as f:
+        for cV,data in contoursDict.items():
+            np.savetxt(f,data,fmt='%.4e',delimiter=',',header=header,comments='\n\n# Contour value=%1.2f \n' %cV)
+    print('Contours saved to %s' %fname)
+
+def readContours(fname):
+
+    contoursDict = {}
+    with open(fname,'r') as f:
+        dataBlocks = f.read().split('#')[1:]
+        for data in dataBlocks: 
+            data = data.splitlines()
+            cV = eval(data[0].split('=')[1])
+            dataPts = np.genfromtxt(data,delimiter=',',names=True,skip_header=1)
+            contoursDict[cV] = dataPts
+
+    return contoursDict
