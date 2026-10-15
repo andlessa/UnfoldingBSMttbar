@@ -454,14 +454,29 @@ def fit_and_assemble_data(
     vlf_max_scale=7.0,
     scalar_max_scale=10.1,
     zprime_max_abs_scale=100.0,
+    mass_source="grid",
+    best_fit_mass_tolerance=1.0,
+    refit_best_fit_scale=True,
+    refit_zprime_best_fit_scale=False,
 ):
     """
     Fit each model grid to an Asimov/synthetic data template.
 
     For every available mass point, the coupling-like scale is profiled
-    continuously. The best available grid mass is used to construct the
-    returned histogram. A local parabolic interpolation in mass is reported
-    only as a diagnostic and is not used to construct a histogram.
+    continuously. With mass_source='grid', select the best discrete mass.
+    With mass_source='best_fit_mc', select the independently generated MC
+    template closest to the parabolic estimate (within the specified mass
+    tolerance), and reprofile the coupling for that fixed, generated mass.
+    The parabolic estimate itself is not a continuous-template likelihood fit.
+    If refit_best_fit_scale=False, keep the original grid-optimal scale when
+    using the new MC instead of profiling it again at the new mass.
+
+    Independently generated Zprime best-fit MC is assumed to ALREADY include
+    its fitted couplings. By default (refit_zprime_best_fit_scale=False), its
+    pure and interference histograms are used WITHOUT ANY further rescaling,
+    even when refit_best_fit_scale=True for Scalar and VLF. Set
+    refit_zprime_best_fit_scale=True only to explicitly opt into reweighting
+    and refitting Zprime about the MC generation reference coupling.
 
     For sys_err = 0, the Poisson deviance is proportional to luminosity.
     The scale minimization is therefore performed using q/(L * PB_TO_FB),
@@ -479,6 +494,11 @@ def fit_and_assemble_data(
     """
 
     del zp_limit_csv
+
+    if mass_source not in ("grid", "best_fit_mc"):
+        raise ValueError("mass_source must be 'grid' or 'best_fit_mc'.")
+    if not np.isfinite(best_fit_mass_tolerance) or best_fit_mass_tolerance < 0:
+        raise ValueError("best_fit_mass_tolerance must be finite and >= 0.")
 
     observable = str(observable)
 
@@ -567,6 +587,8 @@ def fit_and_assemble_data(
     )
 
     scale_map = dict(DEFAULT_FAKE_SCALES)
+    if "scale" in fake_entry:
+        scale_map[fake_data_key] = float(fake_entry["scale"])
 
     if fake_scales is not None:
         scale_map.update(fake_scales)
@@ -710,9 +732,10 @@ def fit_and_assemble_data(
         max_abs_or_upper,
         sys_err,
         int_grid=None,
+        reference_scale=1.0,
     ):
         """
-        Profile the coupling at every discrete mass point.
+        Profile the physical coupling multiplier at fixed MC reference scale.
 
         The physical objective is the profiled Poisson deviance q.
 
@@ -729,6 +752,9 @@ def fit_and_assemble_data(
 
         if masses is None or pure_grid is None or len(masses) == 0:
             return None
+        reference_scale = float(reference_scale)
+        if not np.isfinite(reference_scale) or reference_scale == 0:
+            raise ValueError("The MC template reference_scale must be nonzero and finite.")
 
         signed = int_grid is not None
 
@@ -774,7 +800,7 @@ def fit_and_assemble_data(
 
                 signal_xsec = _model_signal(
                     pure,
-                    k,
+                    k / reference_scale,
                     interference,
                 )
 
@@ -1039,6 +1065,7 @@ def fit_and_assemble_data(
         print("=" * 60)
 
         best_fits = {}
+        selected_templates = {}
 
         for model_name, (
             masses,
@@ -1058,14 +1085,115 @@ def fit_and_assemble_data(
             if result is None:
                 continue
 
+            # The original grid remains the source of the mass-profile
+            # interpolation. Independently generated templates are never
+            # substituted into this grid before computing that interpolation.
+            selected_pure = pure_grid[np.argmin(np.abs(masses - result["snap_m"]))]
+            selected_int = (
+                int_grid[np.argmin(np.abs(masses - result["snap_m"]))]
+                if int_grid is not None else None
+            )
+            reference_scale = 1.0
+            grid_result = result
+
+            if mass_source == "best_fit_mc":
+                by_fake = ws.get("BestFitSamples", {}).get(fake_data_key, {})
+                available = by_fake.get(model_name, {})
+                if not available:
+                    raise KeyError(
+                        f"No best-fit MC templates for fake={fake_data_key!r}, "
+                        f"model={model_name!r}. Generate them and rebuild the workspace."
+                    )
+                available_masses = np.array(sorted(map(float, available)), dtype=float)
+                target_mass = float(grid_result["continuous_m"])
+                nearest = float(available_masses[np.argmin(abs(available_masses - target_mass))])
+                if abs(nearest - target_mass) > best_fit_mass_tolerance:
+                    raise ValueError(
+                        f"Best-fit MC mass mismatch for fake={fake_data_key}, "
+                        f"model={model_name}: parabolic estimate {target_mass:.6f} GeV, "
+                        f"nearest generated MC {nearest:.6f} GeV; "
+                        f"tolerance {best_fit_mass_tolerance:g} GeV."
+                    )
+
+                template = available.get(nearest, available.get(str(nearest)))
+                selected_pure = _as_1d_float("best-fit MC pure", template["pure"])
+                if len(selected_pure) != n_bins:
+                    raise ValueError(f"Best-fit MC histogram length mismatch: {model_name}.")
+                if int_grid is not None:
+                    if "int" not in template:
+                        raise KeyError(f"Best-fit MC {model_name} is missing its interference.")
+                    selected_int = _as_1d_float("best-fit MC int", template["int"])
+                    _require_same_shape(selected_pure=selected_pure, selected_int=selected_int)
+                else:
+                    selected_int = None
+
+                reference_scale = float(template.get("reference_scale", 1.0))
+                # The Zprime best-fit samples already contain the physical
+                # fitted couplings. Their MC histogram components must not
+                # be multiplied by another coupling factor by default.
+                freeze_zprime = (
+                    model_name.startswith("Zprime")
+                    and not refit_zprime_best_fit_scale
+                )
+                should_refit_scale = bool(refit_best_fit_scale) and not freeze_zprime
+
+                if should_refit_scale:
+                    exact_result = fit_grid(
+                        np.array([nearest]),
+                        selected_pure[None, :],
+                        bound,
+                        sys_err,
+                        None if selected_int is None else selected_int[None, :],
+                        reference_scale=reference_scale,
+                    )
+                    if exact_result is None:
+                        raise RuntimeError(f"No valid physical fit for best-fit MC {model_name}.")
+                else:
+                    # For Zprime, k = reference_scale gives EXACTLY unity
+                    # for both scaling factors. For Scalar/VLF with refitting
+                    # disabled, keep the coupling from the original grid fit.
+                    fixed_k = (
+                        reference_scale if freeze_zprime
+                        else float(grid_result["scale_factor"])
+                    )
+                    fixed_signal = _model_signal(
+                        selected_pure, fixed_k / reference_scale, selected_int
+                    )
+                    fixed_total = n_sm + fixed_signal * yield_factor
+                    if np.any(fixed_total[fit_mask] <= 0):
+                        raise ValueError(f"Invalid fixed-scale Poisson yields for {model_name}")
+                    fixed_q, _, _ = _profiled_poisson_deviance(
+                        n_obs[fit_mask], fixed_total[fit_mask],
+                        frac_syst=sys_err, syst_reference=n_sm[fit_mask],
+                    )
+                    exact_result = {
+                        "scale_factor": float(fixed_k),
+                        "min_q": float(fixed_q),
+                    }
+                result = {
+                    **grid_result,
+                    "snap_m": nearest,
+                    "scale_factor": exact_result["scale_factor"],
+                    "min_q": exact_result["min_q"],
+                    "grid_snap_m": grid_result["snap_m"],
+                    "grid_scale_factor": grid_result["scale_factor"],
+                    "grid_min_q": grid_result["min_q"],
+                    "mc_generated_mass": nearest,
+                    "scale_refitted": should_refit_scale,
+                }
+
+            result["reference_scale"] = reference_scale
+            result["template_source"] = mass_source
+            selected_templates[model_name] = (selected_pure, selected_int, reference_scale)
             best_fits[model_name] = result
 
             print(
                 f"{model_name:12s}: "
-                f"grid mass = {result['snap_m']:.1f} GeV | "
-                f"parabolic estimate = {result['continuous_m']:.1f} GeV | "
+                f"selected mass = {result['snap_m']:.3f} GeV | "
+                f"parabolic estimate = {result['continuous_m']:.3f} GeV | "
                 f"scale = {result['scale_factor']:.8g} | "
-                f"min q = {result['min_q']:.6g}"
+                f"min q = {result['min_q']:.6g} | "
+                f"source = {mass_source}"
             )
 
         # ========================================================
@@ -1109,41 +1237,13 @@ def fit_and_assemble_data(
             else np.zeros_like(h_fake_pure)
         )
 
-        # Fitted hypotheses
-        for model_name, fit in best_fits.items():
-
-            if (
-                model_name == "FakeData"
-                or model_name not in model_specs
-            ):
-                continue
-
-            masses, pure_grid, int_grid, _ = (
-                model_specs[model_name]
-            )
-
-            mass_index = int(
-                np.argmin(
-                    np.abs(
-                        masses - fit["snap_m"]
-                    )
-                )
-            )
-
-            k = fit["scale_factor"]
-
-            fitted_hists[model_name] = (
-                k**2
-            ) * pure_grid[mass_index]
-
-            if int_grid is not None:
-
-                fitted_hists[
-                    f"{model_name}_int"
-                ] = (
-                    k
-                    * int_grid[mass_index]
-                )
+        # Fitted hypotheses: use the selected grid or independently
+        # generated MC template, with the correct generation normalization.
+        for model_name, (pure, interference, ref_scale) in selected_templates.items():
+            k = best_fits[model_name]["scale_factor"] / ref_scale
+            fitted_hists[model_name] = k**2 * pure
+            if interference is not None:
+                fitted_hists[f"{model_name}_int"] = k * interference
 
         # ========================================================
         # Save output
@@ -1166,9 +1266,89 @@ def fit_and_assemble_data(
             ),
 
             "workspace_file": workspace_file,
+            "fake_data_key": fake_data_key,
+            "mass_source": mass_source,
         }
 
     return output
+
+def save_best_fit_manifest(
+    fake_data_key,
+    fits_by_systematic,
+    path="best_fit_manifest.json",
+    *,
+    sys_err=0.0,
+    lumi=500.0,
+    reference_scales=None,
+):
+    """Append a per-fake best-fit mass/coupling configuration to JSON.
+
+    The mass is the full-precision parabolic estimate; the fitted coupling
+    comes from the best *grid* mass, and can be refined once new MC exists.
+
+    Crucially, ``reference_scale`` describes the coupling multiplier already
+    present in the NEW MC sample, NOT the multiplier we intend to apply later:
+
+    * Scalar and VLF: assume the new MC was generated with y_DM=1, so
+      reference_scale=1. Their template is subsequently multiplied by k**2.
+    * Zprime / Zprime_20pc: assume the new MC was generated with the fitted
+      signed coupling product, so reference_scale=grid_best_k. Their pure and
+      interference templates are already normalized at the original best fit.
+
+    Override either convention with ``reference_scales={model: value}`` if
+    the actual generation settings differ. The saved 'fit_scale' is always
+    the physical fitted coupling relative to the original mass-grid MC.
+    """
+    import json
+    reference_scales = {} if reference_scales is None else dict(reference_scales)
+    sys_key = _resolve_sys_key(fits_by_systematic, float(sys_err))
+    data = fits_by_systematic[sys_key]
+    models = {}
+    for model, fit in data["best_fits"].items():
+        if model == "FakeData":
+            continue
+        best_k = float(fit.get("grid_scale_factor", fit["scale_factor"]))
+        reference_scale = float(reference_scales.get(
+            model, best_k if model.startswith("Zprime") else 1.0
+        ))
+        if not np.isfinite(reference_scale) or reference_scale == 0:
+            raise ValueError(f"Invalid generation reference_scale for {model}: {reference_scale}")
+        models[model] = {
+            "mass": float(fit["continuous_m"]),
+            "grid_mass": float(fit.get("grid_snap_m", fit["snap_m"])),
+            "fit_scale": best_k,
+            "reference_scale": reference_scale,
+            "grid_min_q": float(fit.get("grid_min_q", fit["min_q"])),
+        }
+        # For colored Scalar/VLF hypotheses, the fitted scale is y_DM
+        # when the original mass-grid templates were generated at y_DM=1.
+        if model in ("VLF", "Scalar"):
+            models[model]["y_dm"] = best_k
+            models[model]["generated_y_dm"] = reference_scale
+        else:
+            models[model]["already_at_best_fit_couplings"] = bool(
+                np.isclose(reference_scale, best_k, atol=1e-10, rtol=1e-9)
+            )
+    path = os.fspath(path)
+    if os.path.isfile(path):
+        with open(path, "r", encoding="utf-8") as stream:
+            manifest = json.load(stream)
+    else:
+        manifest = {"version": 1, "fits": {}}
+    record = {
+        "lumi": float(lumi),
+        "sys_err": float(sys_err),
+        "observable": data["observable"],
+        "analysis_range": list(data["analysis_range"]),
+        "models": models,
+    }
+    # Multiple systematic/luminosity benchmarks can coexist for each fake data.
+    by_fake = manifest.setdefault("fits", {}).setdefault(fake_data_key, {})
+    by_fake[f"eps_{float(sys_err):g}_L_{float(lumi):g}"] = record
+    with open(path, "w", encoding="utf-8") as stream:
+        json.dump(manifest, stream, indent=2, allow_nan=False)
+    return record
+
 
 # ============================================================================
 # Kinematics and LHE parsing
