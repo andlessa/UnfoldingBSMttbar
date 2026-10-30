@@ -51,6 +51,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 try:
     import pylhe
 except ImportError:  # Optional: only required by get_run_metadata/load_lhe_with_corrections.
@@ -59,12 +60,13 @@ from matplotlib.lines import Line2D
 from scipy.optimize import minimize, minimize_scalar
 from tqdm.auto import tqdm
 
-SQRT_S = 13_000.0  # proton-proton centre-of-mass energy, GeV
+SQRT_S = 13_500.0  # proton-proton centre-of-mass energy, GeV
 PB_TO_FB = 1000.0
 DEFAULT_FAKE_SCALES = {
     "Scalar_1500": 7.5,
     "VLF_1500": 3.8,
     "Zprime_3000": -4.4,
+    "Zprime_1pc_3000": -0.55,
 }
 
 # Default likelihood/significance windows for observables that have an agreed
@@ -341,6 +343,10 @@ def _parabolic_mass_estimate(masses, objective_values, idx_min: int) -> float:
     """Return a local three-point parabolic mass estimate for diagnostics only."""
     masses = np.asarray(masses, dtype=float)
     values = np.asarray(objective_values, dtype=float)
+    # An essentially exact Asimov fit is already found at a grid point.
+    # Do not shift it using an approximate local quadratic interpolation.
+    if abs(values[idx_min]) < 1e-10:
+        return float(masses[idx_min])
     if len(masses) < 3:
         return float(masses[idx_min])
 
@@ -438,6 +444,99 @@ def load_model_data(base_path, model_name, rescale=1.0):
 # ============================================================================
 
 
+def _assemble_sm_benchmark_data(
+    workspace,
+    bins,
+    h_sm,
+    fake_scales,
+    sys_err_list,
+    lumi,
+    observable,
+    analysis_range,
+    workspace_file,
+):
+    """Compare SM Asimov data against each fixed benchmark in workspace['FakeData'].
+
+    No mass-grid fit, coupling optimization, or BestFitSamples lookup is performed.
+    All benchmark scales are read from DEFAULT_FAKE_SCALES (or optional explicit
+    fake_scales), not from the workspace. Benchmark labels retain their keys.  The output
+    follows the structure expected by run_fast_lumi_scan.
+    """
+    if not workspace["FakeData"]:
+        raise ValueError("SM comparison requires at least one BSM benchmark in FakeData.")
+
+    scales = dict(DEFAULT_FAKE_SCALES)
+    scales.update(fake_scales or {})
+    n_bins = len(h_sm)
+    zero_signal = np.zeros(n_bins, dtype=float)
+    yield_factor = float(lumi) * PB_TO_FB
+    fit_mask = (bins[:-1] >= analysis_range[0]) & (bins[:-1] < analysis_range[1])
+    n_sm = h_sm * yield_factor
+
+    output = {}
+    for sys_err in map(float, sys_err_list):
+        hists = {"SM": h_sm.copy(), "FakeData": zero_signal.copy(),
+                 "FakeData_int": zero_signal.copy()}
+        best_fits = {"FakeData": {"snap_m": np.nan, "continuous_m": np.nan,
+                                   "scale_factor": 0.0, "min_q": 0.0,
+                                   "fixed_benchmark": True}}
+
+        for benchmark_key, entry in workspace["FakeData"].items():
+            if benchmark_key == "SM":
+                continue
+            pure = _as_1d_float(f"{benchmark_key} pure", entry["pure"])
+            interference = _as_1d_float(
+                f"{benchmark_key} interference", entry.get("int", zero_signal)
+            )
+            _require_same_shape(sm=h_sm, pure=pure, interference=interference)
+            # Nominal benchmark scales come from DEFAULT_FAKE_SCALES in this module.
+            # Intentionally ignore any legacy entry['scale'] stored in the workspace.
+            if benchmark_key not in scales:
+                raise KeyError(
+                    f"No fake-data scale configured for {benchmark_key!r}. "
+                    "Add it to DEFAULT_FAKE_SCALES (or pass fake_scales explicitly)."
+                )
+            scale = float(scales[benchmark_key])
+            if not np.isfinite(scale):
+                raise ValueError(f"Non-finite fake-data scale for {benchmark_key!r}.")
+            uses_interference = benchmark_key.startswith("Zprime")
+            h_pure = scale**2 * pure
+            h_int = scale * interference if uses_interference else zero_signal.copy()
+            hists[benchmark_key] = h_pure
+            hists[f"{benchmark_key}_int"] = h_int
+            n_test = n_sm + (h_pure + h_int) * yield_factor
+            if np.any(n_test[fit_mask] <= 0):
+                raise ValueError(
+                    f"Benchmark {benchmark_key!r} gives nonpositive predicted yields "
+                    "in the analysis window."
+                )
+            min_q, _, _ = _profiled_poisson_deviance(
+                n_sm[fit_mask], n_test[fit_mask],
+                frac_syst=sys_err, syst_reference=n_sm[fit_mask],
+            )
+            mass_match = re.search(r"_(\d+(?:\.\d+)?)$", benchmark_key)
+            mass_value = float(mass_match.group(1)) if mass_match else np.nan
+            best_fits[benchmark_key] = {
+                "snap_m": mass_value, "continuous_m": mass_value,
+                "scale_factor": scale, "min_q": min_q,
+                "fixed_benchmark": True,
+            }
+            print(f"Fixed benchmark {benchmark_key:22s}: scale = {scale:.7g} | "
+                  f"q(SM vs benchmark) = {min_q:.6g}")
+
+        output[sys_err] = {
+            "hists": hists, "best_fits": best_fits,
+            "bins": bins.copy(), "observable": observable,
+            "analysis_range": tuple(analysis_range),
+            "fit_window": tuple(analysis_range),
+            "workspace_file": workspace_file, "fake_data_key": "SM",
+            "mass_source": "fixed_benchmarks",
+            "comparison_mode": "fixed_benchmarks",
+            "benchmark_labels": [key for key in workspace["FakeData"] if key != "SM"],
+        }
+    return output
+
+
 def fit_and_assemble_data(
     fake_data_key,
     workspace_file=None,
@@ -451,16 +550,20 @@ def fit_and_assemble_data(
     fit_min=None,
     fit_max=None,
     fake_scales=None,
-    vlf_max_scale=7.0,
-    scalar_max_scale=10.1,
+    vlf_max_scale=4*np.pi,
+    scalar_max_scale=4*np.pi,
     zprime_max_abs_scale=100.0,
     mass_source="grid",
-    best_fit_mass_tolerance=1.0,
+    best_fit_mass_tolerance=5.0,
     refit_best_fit_scale=True,
     refit_zprime_best_fit_scale=False,
 ):
     """
     Fit each model grid to an Asimov/synthetic data template.
+
+    With fake_data_key='SM', skip fitting entirely and compare SM Asimov data
+    against the fixed entries of workspace['FakeData'], using their own nominal
+    masses and scales. The normalized-falloff significance is then undefined.
 
     For every available mass point, the coupling-like scale is profiled
     continuously. With mass_source='grid', select the best discrete mass.
@@ -558,6 +661,13 @@ def fit_and_assemble_data(
         & (bins[:-1] < analysis_max)
     )
 
+    if fake_data_key == "SM":
+        print("SM Asimov truth: testing the fixed BSM fake-data benchmarks (no fits).")
+        return _assemble_sm_benchmark_data(
+            ws, bins, h_sm, fake_scales, sys_err_list, lumi, observable,
+            (analysis_min, analysis_max), workspace_file,
+        )
+
     # ============================================================
     # Synthetic / Asimov data
     # ============================================================
@@ -586,10 +696,10 @@ def fit_and_assemble_data(
         h_fake_int=h_fake_int,
     )
 
+    # Restore the original behavior: only DEFAULT_FAKE_SCALES (and optional
+    # explicit fake_scales) control the synthetic-data benchmark couplings.
+    # Ignore legacy workspace entries with a stored 'scale'.
     scale_map = dict(DEFAULT_FAKE_SCALES)
-    if "scale" in fake_entry:
-        scale_map[fake_data_key] = float(fake_entry["scale"])
-
     if fake_scales is not None:
         scale_map.update(fake_scales)
 
@@ -780,7 +890,7 @@ def fit_and_assemble_data(
         fit_normalization = yield_factor
 
 
-        N_SCAN = 301
+        n_scan = 301
 
         for i, pure in enumerate(pure_grid):
 
@@ -846,7 +956,7 @@ def fit_and_assemble_data(
             scan_ks = np.linspace(
                 lower,
                 upper,
-                N_SCAN,
+                n_scan,
             )
 
             scan_q = np.array(
@@ -2303,9 +2413,9 @@ def run_fast_lumi_scan(
     Notes
     -----
     ``Z_sh`` is the profile-likelihood Asimov significance. ``Z_fa`` is the
-    normalized-falloff significance and is reported as NaN for the SM test,
-    because an L1-normalized signal falloff is undefined when the test excess is
-    identically zero.
+    normalized-falloff significance and is reported as NaN if either the SM
+    is the test hypothesis or the SM is the Asimov truth, because the
+    L1-normalized signal excess is then undefined.
     """
     del bin_width, var, bin_offset
     if lumi_targets is None or sys_err_list is None:
@@ -2374,6 +2484,9 @@ def run_fast_lumi_scan(
                 label: signal * lum * PB_TO_FB for label, signal in signals.items()
             }
             reference_signal = signal_yields[fake_model]
+            sm_truth_mode = data.get("comparison_mode") == "fixed_benchmarks"
+            if sm_truth_mode and sig_norm:
+                raise ValueError("sig_norm is undefined for zero-excess SM Asimov truth.")
             if sig_norm:
                 for label in list(signal_yields):
                     if label == "SM":
@@ -2402,7 +2515,7 @@ def run_fast_lumi_scan(
                     n_sm,
                     sys_err,
                     alpha=alpha,
-                    allow_falloff=(label != "SM"),
+                    allow_falloff=(label != "SM" and not sm_truth_mode),
                 )
                 key = (lum, f"{fake_model} vs {label}")
                 rows.setdefault(
@@ -2952,3 +3065,235 @@ def readContours(fname):
             contoursDict[cV] = dataPts
 
     return contoursDict
+
+
+# ============================================================================
+# pT notebook fitting/significance orchestration and shared plot configuration
+# ============================================================================
+
+def _clone_zero_systematic_fit(reference, lum, reference_lumi):
+    """Reuse fitted cross sections while updating stored q to the new luminosity.
+
+    For eps=0, the Poisson deviance is linear in luminosity with all
+    hypothesis parameters fixed. Cross-section histograms and best-fit masses,
+    coupling scales, and generation reference scales remain unchanged.
+    This avoids both repeating the optimization and leaving stale q metadata.
+    """
+    ratio = float(lum) / float(reference_lumi)
+    reused = dict(reference)
+    reused['best_fits'] = {}
+    for model_name, fit in reference['best_fits'].items():
+        copied = dict(fit)
+        for name in ('min_q', 'grid_min_q'):
+            if name in copied:
+                copied[name] = float(copied[name]) * ratio
+        for name in ('grid_q',):
+            if name in copied:
+                copied[name] = np.asarray(copied[name]) * ratio
+        reused['best_fits'][model_name] = copied
+    return reused
+
+
+def assemble_luminosity_fits(fake_data_key, workspace_file, luminosities,
+                             systematics, *, observable='pT',
+                             analysis_range=(500, 3600), mass_source='best_fit_mc',
+                             refit_best_fit_scale=True,
+                             refit_zprime_best_fit_scale=False,
+                             best_fit_mass_tolerance=5.0):
+    """Return ``fits[lumi][eps]`` without redundant zero-systematics fits.
+
+    At eps=0 the optimum mass and coupling are independent of luminosity:
+    q(k, m; L, 0) = (L/L_ref) * q(k, m; L_ref, 0). Fit once at the first
+    requested luminosity, reuse the fitted cross-section templates, and
+    update the stored physical q metadata analytically for every other luminosity.
+    The normalized grid_q_fit is luminosity-independent and is not rescaled.
+
+    At eps>0 the Gaussian nuisance penalties invalidate this simple scaling:
+    separately fit at *every* luminosity. SM truth uses fixed BSM benchmarks
+    (no parameter optimization); the same reuse rule holds at eps=0.
+
+    The narrow-Zprime grid fallback retains compatibility with older
+    workspaces that lack its independently generated best-fit MC templates.
+    """
+    luminosities = [float(lum) for lum in luminosities]
+    systematics = list(dict.fromkeys(float(eps) for eps in systematics))
+    if not luminosities or any(not np.isfinite(lum) or lum <= 0 for lum in luminosities):
+        raise ValueError('At least one finite positive luminosity is required.')
+    if len(set(luminosities)) != len(luminosities):
+        raise ValueError('Luminosities must be unique.')
+    if not systematics or any(not np.isfinite(eps) or eps < 0 for eps in systematics):
+        raise ValueError('Specify finite, nonnegative systematic uncertainties.')
+
+    selected_source = mass_source
+    if fake_data_key == 'SM':
+        selected_source = 'grid'  # fit_and_assemble_data dispatches to fixed SM comparisons.
+    elif mass_source == 'best_fit_mc' and fake_data_key == 'Zprime_1pc_3000':
+        with open(workspace_file, 'rb') as handle:
+            workspace = pickle.load(handle)
+        by_model = workspace.get('BestFitSamples', {}).get(fake_data_key, {})
+        required = ('Scalar', 'VLF', 'Zprime', 'Zprime_20pc')
+        if any(not by_model.get(model) for model in required):
+            print('Narrow Zprime: best-fit MC incomplete; using the mass grid.')
+            selected_source = 'grid'
+
+    def fit_for(lum, eps_values):
+        return fit_and_assemble_data(
+            fake_data_key=fake_data_key, workspace_file=workspace_file,
+            sys_err_list=eps_values, lumi=float(lum), observable=observable,
+            analysis_range=analysis_range, mass_source=selected_source,
+            best_fit_mass_tolerance=best_fit_mass_tolerance,
+            refit_best_fit_scale=refit_best_fit_scale,
+            refit_zprime_best_fit_scale=refit_zprime_best_fit_scale,
+        )
+
+    fits = {lum: {} for lum in luminosities}
+    if 0.0 in systematics:
+        reference_lumi = luminosities[0]
+        print(f'Fitting {fake_data_key} once at {reference_lumi:g} fb^-1 (0% systematics).')
+        reference = fit_for(reference_lumi, [0.0])[0.0]
+        for lum in luminosities:
+            fits[lum][0.0] = (_clone_zero_systematic_fit(reference, lum, reference_lumi)
+                              if lum != reference_lumi else reference)
+
+    nonzero = [eps for eps in systematics if eps != 0.0]
+    for lum in luminosities:
+        if nonzero:
+            print(f'Fitting {fake_data_key} at {lum:g} fb^-1 with nonzero systematics.')
+            fits[lum].update(fit_for(lum, nonzero))
+    return fits
+
+
+def scan_truth_significances(fake_data_key, fitted_data_by_lumi, luminosities,
+                             systematics, benchmark_keys, *, observable='pT',
+                             analysis_range=(500, 3600)):
+    """Evaluate the BSM fitted-hypothesis or SM fixed-benchmark significance.
+
+    For SM truth, the tested hypotheses are the fixed synthetic benchmarks
+    and no best-fit MC samples are accessed. For BSM truth the four fitted
+    models and the SM null hypothesis are compared to the synthetic truth.
+    """
+    labels = (list(benchmark_keys) if fake_data_key == 'SM'
+              else ['Scalar', 'VLF', 'Zprime', 'Zprime_20pc', 'SM'])
+    return run_fast_lumi_scan(
+        fitted_data_by_lumi=fitted_data_by_lumi, labels=labels,
+        lumi_targets=luminosities, sys_err_list=systematics,
+        fake_model='FakeData', sm_cms=False, include_sm=(fake_data_key != 'SM'),
+        observable=observable, analysis_range=analysis_range,
+    )
+
+
+def make_significance_summary(workspace_file, luminosity, systematics, *,
+                              observable='pT', analysis_range=(500, 3600),
+                              mass_source='best_fit_mc',
+                              refit_best_fit_scale=True,
+                              refit_zprime_best_fit_scale=False,
+                              best_fit_mass_tolerance=5.0,
+                              cached_fits=None, cached_truth=None,
+                              truth_keys=None):
+    """Calculate truth/test significance tables for requested benchmarks and SM.
+
+    If the active truth has already been fitted at this luminosity, reuse it;
+    all other truths are handled via ``assemble_luminosity_fits``. The latter
+    performs a single zero-systematics fit per truth and re-fits nonzero
+    systematics for each requested luminosity. ``truth_keys`` optionally
+    limits which truths are evaluated; by default all benchmarks and SM are
+    included, retaining compatibility with the original implementation.
+    """
+    with open(workspace_file, 'rb') as handle:
+        workspace = pickle.load(handle)
+    benchmark_keys = [key for key in workspace['FakeData'] if key != 'SM']
+    available_truths = [*benchmark_keys, 'SM']
+    all_truths = available_truths if truth_keys is None else list(truth_keys)
+    if not all_truths or len(all_truths) != len(set(all_truths)):
+        raise ValueError('truth_keys must contain unique, nonempty truth labels.')
+    unknown_truths = [key for key in all_truths if key not in available_truths]
+    if unknown_truths:
+        raise KeyError(f'Unknown summary truth keys: {unknown_truths}')
+    luminosity = float(luminosity)
+    summary = {}
+    for fake_key in all_truths:
+        if cached_truth == fake_key and cached_fits and luminosity in cached_fits:
+            fits = {luminosity: cached_fits[luminosity]}
+        else:
+            fits = assemble_luminosity_fits(
+                fake_key, workspace_file, [luminosity], systematics,
+                observable=observable, analysis_range=analysis_range,
+                mass_source=mass_source,
+                refit_best_fit_scale=refit_best_fit_scale,
+                refit_zprime_best_fit_scale=refit_zprime_best_fit_scale,
+                best_fit_mass_tolerance=best_fit_mass_tolerance,
+            )
+        summary[fake_key] = scan_truth_significances(
+            fake_key, fits, [luminosity], systematics, benchmark_keys,
+            observable=observable, analysis_range=analysis_range,
+        )
+    return summary
+
+
+def configure_pt_plot_style():
+    """Apply the original notebook Matplotlib/Seaborn settings unchanged.
+
+    The three analysis plots themselves live in the Jupyter notebook so their
+    colors, labels, axis choices and summary matrix ordering are editable there.
+
+    The order of updates matters: later rcParams/Seaborn calls intentionally
+    override earlier settings, exactly as in the supplied notebook.
+    """
+    pd.options.mode.chained_assignment = None
+    plt.rcParams['figure.max_open_warning'] = 50
+    plt.rcParams.update({
+        "text.usetex": True,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Helvetica"],
+        "savefig.dpi": 300
+    })
+    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+
+    sns.set_style('ticks', {'font.family': 'Times New Roman', 'font.serif': 'Times New Roman'})
+    sns.set_context('paper', font_scale=2.0)
+
+
+    colors = plt.cm.tab10.colors
+    color_map = {
+        'SM': 'gray',
+        'VLF': colors[2],
+        'Scalar': colors[0],
+        'Zprime': colors[3],
+        'Zprime_20pc': 'firebrick',
+        'FakeData': 'black'
+    }
+
+
+    # Dictionaries for styling
+    pair_colors = {"Scalar vs VLF": "#1f77b4", "Scalar vs Zprime": "#2ca02c", "VLF vs Zprime": "#d62728"}
+    class_colors = {"Scalar": "blue", "VLF": "green", "Zprime": "red"}
+    pair_latex = {"Scalar vs VLF": r"Scalar vs VLF", "Scalar vs Zprime": r"Scalar vs $Z^\prime$", "VLF vs Zprime": r"VLF vs $Z^\prime$"}
+    class_latex = {"Scalar": r"Scalar", "VLF": r"VLF", "Zprime": r"$Z^\prime$"}
+    syst_styles = {0.00: ("black", "-"), 0.02: ("#1f77b4", "--"), 0.05: ("#ff7f0e", "-."), 0.10: ("#d62728", ":")}
+    eps_styles = {
+        0.0: ('-', 'D'),
+        0.02: ("-.", "o"),
+        0.05: ("--", "s"),
+        0.10: (":", "^")
+    }
+
+
+
+    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+    plt.rcParams['figure.max_open_warning'] = 50
+    pd.option_context('display.max_columns', -1)
+
+
+    pd.options.mode.chained_assignment = None #Disable copy warnings
+
+
+    #Define plotting style:
+    sns.set() #Set style
+    sns.set_style('ticks',{'font.family':'Times New Roman', 'font.serif':'Times New Roman'})
+    sns.set_context('paper', font_scale=1.9, rc={
+        "axes.labelsize": 19,
+        "axes.titlesize": 19,
+        "legend.title_fontsize": 14,
+        "legend.fontsize": 13,
+    })
+    cm = plt.colormaps['RdYlBu']
