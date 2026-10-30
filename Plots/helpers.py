@@ -205,6 +205,29 @@ def _profiled_poisson_deviance(
     return float(np.sum(q_bins)), theta_hat, profiled_test
 
 
+def _asimov_chi2(n_true, n_test, frac_syst: float = 0.0, syst_reference=None) -> float:
+    """Return the Gaussian chi^2 of the test hypothesis against Asimov data.
+
+    Because the Asimov data set carries no fluctuations, the variance in each
+    bin is that of the *tested* hypothesis:
+
+        chi^2 = sum_i (n_true_i - n_test_i)^2 / (n_test_i + (eps * ref_i)^2),
+
+    with ``ref`` defaulting to ``n_test`` (as in
+    :func:`_profiled_poisson_deviance`). To leading order in
+    ``(n_true - n_test) / n_test`` this equals the profiled q, so it is used
+    for reporting only; the fits still minimize q.
+    """
+    n_true = _as_1d_float("n_true", n_true)
+    n_test = _as_1d_float("n_test", n_test)
+    ref = n_test if syst_reference is None else _as_1d_float("syst_reference", syst_reference)
+    _require_same_shape(n_true=n_true, n_test=n_test, syst_reference=ref)
+    variance = n_test + (float(frac_syst) * ref) ** 2
+    if np.any(variance <= 0):
+        raise ValueError("The test-hypothesis variance must be positive in every bin.")
+    return float(np.sum((n_true - n_test) ** 2 / variance))
+
+
 def _model_signal(pure, scale: float, interference=None) -> np.ndarray:
     """Scale stored signal components according to their coupling dependence."""
     pure = np.asarray(pure, dtype=float)
@@ -454,6 +477,7 @@ def _assemble_sm_benchmark_data(
     observable,
     analysis_range,
     workspace_file,
+    chi2_lumi=500.0,
 ):
     """Compare SM Asimov data against each fixed benchmark in workspace['FakeData'].
 
@@ -514,15 +538,23 @@ def _assemble_sm_benchmark_data(
                 n_sm[fit_mask], n_test[fit_mask],
                 frac_syst=sys_err, syst_reference=n_sm[fit_mask],
             )
+            chi2_ratio = float(chi2_lumi) / float(lumi)
+            chi2 = _asimov_chi2(
+                n_sm[fit_mask] * chi2_ratio, n_test[fit_mask] * chi2_ratio,
+                frac_syst=sys_err, syst_reference=n_sm[fit_mask] * chi2_ratio,
+            )
             mass_match = re.search(r"_(\d+(?:\.\d+)?)$", benchmark_key)
             mass_value = float(mass_match.group(1)) if mass_match else np.nan
             best_fits[benchmark_key] = {
                 "snap_m": mass_value, "continuous_m": mass_value,
-                "scale_factor": scale, "min_q": min_q,
+                "scale_factor": scale, "min_q": min_q, "chi2": chi2,
+                "chi2_lumi": float(chi2_lumi),
+                "n_fit_bins": int(np.count_nonzero(fit_mask)),
                 "fixed_benchmark": True,
             }
             print(f"Fixed benchmark {benchmark_key:22s}: scale = {scale:.7g} | "
-                  f"q(SM vs benchmark) = {min_q:.6g}")
+                  f"chi2(SM vs benchmark, {chi2_lumi:g}/fb) = {chi2:.6g} "
+                  f"({np.count_nonzero(fit_mask)} bins)")
 
         output[sys_err] = {
             "hists": hists, "best_fits": best_fits,
@@ -557,6 +589,7 @@ def fit_and_assemble_data(
     best_fit_mass_tolerance=5.0,
     refit_best_fit_scale=True,
     refit_zprime_best_fit_scale=False,
+    chi2_lumi=500.0,
 ):
     """
     Fit each model grid to an Asimov/synthetic data template.
@@ -592,6 +625,11 @@ def fit_and_assemble_data(
 
     The physical, unnormalized q value is always stored in "min_q".
 
+    The printed/stored "chi2" is the Gaussian chi^2 of the best fit against
+    the Asimov data (see _asimov_chi2), always evaluated at the fixed
+    luminosity chi2_lumi [fb^-1] so that tables at different lumi are
+    comparable. The best-fit parameters still come from the fit at lumi.
+
     For nonzero sys_err, the likelihood profiles one independent Gaussian
     nuisance parameter per bin acting on the SM background.
     """
@@ -607,6 +645,9 @@ def fit_and_assemble_data(
 
     if lumi <= 0:
         raise ValueError("lumi must be positive.")
+    if not np.isfinite(chi2_lumi) or chi2_lumi <= 0:
+        raise ValueError("chi2_lumi must be finite and positive.")
+    chi2_yield_factor = float(chi2_lumi) * PB_TO_FB
 
     workspace_file = _resolve_workspace_file(
         observable,
@@ -665,7 +706,7 @@ def fit_and_assemble_data(
         print("SM Asimov truth: testing the fixed BSM fake-data benchmarks (no fits).")
         return _assemble_sm_benchmark_data(
             ws, bins, h_sm, fake_scales, sys_err_list, lumi, observable,
-            (analysis_min, analysis_max), workspace_file,
+            (analysis_min, analysis_max), workspace_file, chi2_lumi,
         )
 
     # ============================================================
@@ -1292,6 +1333,22 @@ def fit_and_assemble_data(
                     "scale_refitted": should_refit_scale,
                 }
 
+            # Report the chi^2 of the selected best fit against the Asimov
+            # data, evaluated at the fixed luminosity chi2_lumi so that it is
+            # comparable between fits; the fit itself minimized q at lumi.
+            best_signal = _model_signal(
+                selected_pure,
+                result["scale_factor"] / reference_scale,
+                selected_int,
+            )
+            result["chi2"] = _asimov_chi2(
+                (h_sm + fake_signal_xsec)[fit_mask] * chi2_yield_factor,
+                (h_sm + best_signal)[fit_mask] * chi2_yield_factor,
+                frac_syst=sys_err, syst_reference=h_sm[fit_mask] * chi2_yield_factor,
+            )
+            result["chi2_lumi"] = float(chi2_lumi)
+            result["n_fit_bins"] = int(np.count_nonzero(fit_mask))
+
             result["reference_scale"] = reference_scale
             result["template_source"] = mass_source
             selected_templates[model_name] = (selected_pure, selected_int, reference_scale)
@@ -1302,7 +1359,8 @@ def fit_and_assemble_data(
                 f"selected mass = {result['snap_m']:.3f} GeV | "
                 f"parabolic estimate = {result['continuous_m']:.3f} GeV | "
                 f"scale = {result['scale_factor']:.8g} | "
-                f"min q = {result['min_q']:.6g} | "
+                f"chi2({chi2_lumi:g}/fb) = {result['chi2']:.6g} "
+                f"({result['n_fit_bins']} bins) | "
                 f"source = {mass_source}"
             )
 
