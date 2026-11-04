@@ -39,9 +39,6 @@ The values are the `Integrated weight (pb)` written in each banner. The banners 
 | $p p \to t \bar{t}$, interference | $7.8143 \times 10^{-4}$ | $9.7060 \times 10^{-3}$ |
 | **Sum** $t \bar{t}$ (pure BSM + interference) | $9.4649 \times 10^{-4}$ | $1.2099 \times 10^{-2}$ |
 
-* The sum only combines the two $t\bar{t}$ contributions. The inclusive $p p \to Z^\prime$ and the dijet cross sections are different final states and are not added.
-* The pure BSM $t\bar{t}$ cross section includes the off-shell $Z^\prime$ contributions, so it is not equal to $\sigma(p p \to Z^\prime) \times \mathrm{BR}(Z^\prime \to t\bar{t})$.
-* The interference cross section can be larger than the pure BSM one because it is linear in the small light-quark coupling and comes mostly from low $m_{t\bar{t}}$, far from the resonance.
 
 ## Main run settings
 
