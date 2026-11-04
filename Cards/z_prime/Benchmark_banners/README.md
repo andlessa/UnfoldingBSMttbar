@@ -29,17 +29,17 @@ All other couplings are negligible: $g^V_{u22} = g^V_{d22} = g^V_{d33} = 10^{-6}
 
 ## Cross sections
 
-The values are the `Integrated weight (pb)` written in each banner. The banners do not include the uncertainty of the cross section, so no errors are quoted.
+The values are the `Integrated weight (pb)` written in each banner.
 
 | Process | Narrow $\sigma$ (pb) | Broad $\sigma$ (pb) |
 |---|---|---|
-| $p p \to Z^\prime$ | $1.3259 \times 10^{-4}$ | $1.1321 \times 10^{-3}$ |
+| $p p \to Z^\prime$ | $ 1.4834 \times 10^{-4}$ | $1.2667 \times 10^{-3}$ |
 | $p p \to Z^\prime \to q \bar{q}$ | $3.6415 \times 10^{-7}$ | $2.5329 \times 10^{-6}$ |
 | $p p \to t \bar{t}$, pure BSM | $1.6506 \times 10^{-4}$ | $2.3926 \times 10^{-3}$ |
 | $p p \to t \bar{t}$, interference | $7.8143 \times 10^{-4}$ | $9.7060 \times 10^{-3}$ |
 | **Sum** $t \bar{t}$ (pure BSM + interference) | $9.4649 \times 10^{-4}$ | $1.2099 \times 10^{-2}$ |
 
-
+Notice that, for the narrow case, $sigma(p p \to Z^\prime)BR(Z^\prime \to t \bar{t}) ~ 1.48019 \times 10^{-4}$ (pb), while $\sigma(p p \to t\bar{t}) = 1.6506 \times 10^{-4}$ (pb) for the pure BSM term. This discrepancy comes from the renormalization and factorization scales used in Madraph in $p p \to Z^\prime$ and in $p p \to t \bar{t}$. Although in both cases we use the dynamical_scale_choice = 3, in the 2->1 process $\mu_R = \mu_F ~ m_{Z^\prime/2}$ while for the 2->2 process the scales depends on the transverse mass of the top quarks. If we set the dynamical_scale_choice = 4, we have $\mu_R = \mu_F = \sqrt{s}$ and the values agree.
 ## Main run settings
 
 * PDF: `nn23nlo` (NNPDF2.3 NLO), leading order

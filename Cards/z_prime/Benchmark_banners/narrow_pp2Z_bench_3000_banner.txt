@@ -150,7 +150,7 @@ DMsimp_s_spin1
 # Warning: Do not generate more than 1M events in a single run       *
 #*********************************************************************
   10000 = nevents ! Number of unweighted events requested 
- 51 = iseed   ! rnd seed (0=assigned automatically=default))
+ 111 = iseed   ! rnd seed (0=assigned automatically=default))
 #*********************************************************************
 # Collider type and energy                                           *
 # lpp: 0=No PDF, 1=proton, -1=antiproton,                            *
@@ -180,11 +180,11 @@ DMsimp_s_spin1
 # Renormalization and factorization scales                           *
 #*********************************************************************
  False = fixed_ren_scale  ! if .true. use fixed ren scale
-     False = fixed_fac_scale  ! if .true. use fixed fac scale
+  False = fixed_fac_scale  ! if .true. use fixed fac scale
  91.188  = scale            ! fixed ren scale
  91.188  = dsqrt_q2fact1    ! fixed fact scale for pdf1
  91.188  = dsqrt_q2fact2    ! fixed fact scale for pdf2
- -1 = dynamical_scale_choice ! Choose one of the preselected dynamical choices
+ 3 = dynamical_scale_choice ! Choose one of the preselected dynamical choices
  1.0  = scalefact        ! scale factor for event-by-event scales
 
  
@@ -203,7 +203,7 @@ DMsimp_s_spin1
 #*********************************************************************
    0  = nhel          ! using helicities importance sampling or not.
                              ! 0: sum over helicity, 1: importance sampling
-   1  = sde_strategy  ! default integration strategy (hep-ph/2021.00773)
+   2  = sde_strategy  ! default integration strategy (hep-ph/2021.00773)
                              ! 1 is old strategy (using amp square)
 			     ! 2 is new strategy (using only the denominator)
 # To see advanced option for Phase-Space optimization: type "update psoptim"			     
@@ -244,7 +244,7 @@ DMsimp_s_spin1
 #*********************************************************************
 # Minimum and maximum invariant mass for pairs                       *
 #*********************************************************************
- {6:1300} = mxx_min_pdg ! min invariant mass of a pair of particles X/X~ (e.g. {6:250})
+ {} = mxx_min_pdg ! min invariant mass of a pair of particles X/X~ (e.g. {6:250})
  {'default': False} = mxx_only_part_antipart ! if True the invariant mass is applied only 
                        ! to pairs of particle/antiparticle and not to pairs of the same pdg codes.  
 #*********************************************************************
@@ -354,7 +354,7 @@ BLOCK YUKAWA #
 ###################################
 ## INFORMATION FOR QNUMBERS 9000001
 ###################################
-BLOCK QNUMBERS 9000001 #   gha
+BLOCK QNUMBERS 9000001 #            gha
       1 0 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -362,7 +362,7 @@ BLOCK QNUMBERS 9000001 #   gha
 ###################################
 ## INFORMATION FOR QNUMBERS 9000002
 ###################################
-BLOCK QNUMBERS 9000002 #   ghz
+BLOCK QNUMBERS 9000002 #            ghz
       1 0 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -370,7 +370,7 @@ BLOCK QNUMBERS 9000002 #   ghz
 ###################################
 ## INFORMATION FOR QNUMBERS 9000003
 ###################################
-BLOCK QNUMBERS 9000003 #   ghwp
+BLOCK QNUMBERS 9000003 #            ghwp
       1 3 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -378,7 +378,7 @@ BLOCK QNUMBERS 9000003 #   ghwp
 ###################################
 ## INFORMATION FOR QNUMBERS 9000004
 ###################################
-BLOCK QNUMBERS 9000004 #   ghwm
+BLOCK QNUMBERS 9000004 #            ghwm
       1 -3 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -386,7 +386,7 @@ BLOCK QNUMBERS 9000004 #   ghwm
 ###################################
 ## INFORMATION FOR QNUMBERS 82
 ###################################
-BLOCK QNUMBERS 82 #   ghg
+BLOCK QNUMBERS 82 #            ghg
       1 0 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 8 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -394,7 +394,7 @@ BLOCK QNUMBERS 82 #   ghg
 ###################################
 ## INFORMATION FOR QNUMBERS 5000511
 ###################################
-BLOCK QNUMBERS 5000511 #   xr
+BLOCK QNUMBERS 5000511 #            xr
       1 0 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -402,7 +402,7 @@ BLOCK QNUMBERS 5000511 #   xr
 ###################################
 ## INFORMATION FOR QNUMBERS 5000512
 ###################################
-BLOCK QNUMBERS 5000512 #   xc
+BLOCK QNUMBERS 5000512 #            xc
       1 0 # 3 times electric charge
       2 1 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -410,7 +410,7 @@ BLOCK QNUMBERS 5000512 #   xc
 ###################################
 ## INFORMATION FOR QNUMBERS 5000521
 ###################################
-BLOCK QNUMBERS 5000521 #   xd
+BLOCK QNUMBERS 5000521 #            xd
       1 0 # 3 times electric charge
       2 2 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
@@ -418,49 +418,1152 @@ BLOCK QNUMBERS 5000521 #   xd
 ###################################
 ## INFORMATION FOR QNUMBERS 5000001
 ###################################
-BLOCK QNUMBERS 5000001 #   y1
+BLOCK QNUMBERS 5000001 #            y1
       1 0 # 3 times electric charge
       2 3 # number of spin states (2s+1)
       3 1 # colour rep (1: singlet, 3: triplet, 8: octet)
       4 0 # particle/antiparticle distinction (0=own anti)
-###################################
-## INFORMATION FOR DECAY
-###################################
-DECAY 1 0.000000e+00 # d : 0.0
-DECAY 2 0.000000e+00 # u : 0.0
-DECAY 3 0.000000e+00 # s : 0.0
-DECAY 4 0.000000e+00 # c : 0.0
-DECAY 5 0.000000e+00 # b : 0.0
-DECAY 6 1.508336e+00 # wt
-DECAY 11 0.000000e+00 # e- : 0.0
-DECAY 12 0.000000e+00 # ve : 0.0
-DECAY 13 0.000000e+00 # mu- : 0.0
-DECAY 14 0.000000e+00 # vm : 0.0
-DECAY 15 0.000000e+00 # ta- : 0.0
-DECAY 16 0.000000e+00 # vt : 0.0
-DECAY 21 0.000000e+00 # g : 0.0
-DECAY 22 0.000000e+00 # a : 0.0
-DECAY 23 2.495200e+00 # wz
-DECAY 24 2.085000e+00 # ww
-DECAY 25 4.070000e-03 # wh
-DECAY 5000001 3.000796e+01 # wy1
-      9.978330e-01 2 -6 6 # 29.942936576021992
-      1.083506e-03 2 -2 2 # 0.03251381935633257
-      1.083506e-03 2 -1 1 # 0.03251381935633257
-      7.955635e-12 2 -5 5 # 2.38732414637843e-10
-      7.955635e-12 2 -4 4 # 2.38732414637843e-10
-      7.955635e-12 2 -3 3 # 2.38732414637843e-10
-
-DECAY 5000511 0.000000e+00 # xr : 0.0
-DECAY 5000512 0.000000e+00 # xc : 0.0
-DECAY 5000521 0.000000e+00 # xd : 0.0
-DECAY 9000002 2.495200e+00 # ghz : wz
-DECAY 9000003 2.085000e+00 # ghwp : ww
-DECAY 9000004 2.085000e+00 # ghwm : ww
+#
+#*************************
+#      Decay widths      *
+#*************************
+#
+#      PDG        Width
+DECAY  1   0.000000e+00 #  d : 0.0
+#
+#      PDG        Width
+DECAY  2   0.000000e+00 #  u : 0.0
+#
+#      PDG        Width
+DECAY  3   0.000000e+00 #  s : 0.0
+#
+#      PDG        Width
+DECAY  4   0.000000e+00 #  c : 0.0
+#
+#      PDG        Width
+DECAY  5   0.000000e+00 #  b : 0.0
+#
+#      PDG        Width
+DECAY  6   1.508336e+00 #  wt
+#
+#      PDG        Width
+DECAY  11   0.000000e+00 #  e- : 0.0
+#
+#      PDG        Width
+DECAY  12   0.000000e+00 #  ve : 0.0
+#
+#      PDG        Width
+DECAY  13   0.000000e+00 #  mu- : 0.0
+#
+#      PDG        Width
+DECAY  14   0.000000e+00 #  vm : 0.0
+#
+#      PDG        Width
+DECAY  15   0.000000e+00 #  ta- : 0.0
+#
+#      PDG        Width
+DECAY  16   0.000000e+00 #  vt : 0.0
+#
+#      PDG        Width
+DECAY  21   0.000000e+00 #  g : 0.0
+#
+#      PDG        Width
+DECAY  22   0.000000e+00 #  a : 0.0
+#
+#      PDG        Width
+DECAY  23   2.495200e+00 #  wz
+#
+#      PDG        Width
+DECAY  24   2.085000e+00 #  ww
+#
+#      PDG        Width
+DECAY  25   4.070000e-03 #  wh
+#
+#      PDG        Width
+DECAY  5000001   3.000796e+01 #  wy1
+#  BR             NDA  ID1    ID2   ...
+   9.978330e-01   2    6  -6 # 29.942936576021992
+   1.083506e-03   2    2  -2 # 0.03251381935633257
+   1.083506e-03   2    1  -1 # 0.03251381935633257
+   7.955635e-12   2    5  -5 # 2.38732414637843e-10
+   7.955635e-12   2    4  -4 # 2.38732414637843e-10
+   7.955635e-12   2    3  -3 # 2.38732414637843e-10
+#
+#      PDG        Width
+DECAY  5000511   0.000000e+00 #  xr : 0.0
+#
+#      PDG        Width
+DECAY  5000512   0.000000e+00 #  xc : 0.0
+#
+#      PDG        Width
+DECAY  5000521   0.000000e+00 #  xd : 0.0
+#
+#      PDG        Width
+DECAY  9000002   2.495200e+00 #  ghz : wz
+#
+#      PDG        Width
+DECAY  9000003   2.085000e+00 #  ghwp : ww
+#
+#      PDG        Width
+DECAY  9000004   2.085000e+00 #  ghwm : ww
 </slha>
+<initrwgt>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="1" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="2" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="3" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="4" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="5" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="6" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="7" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="8" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="9" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="10" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="11" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="12" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="13" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="14" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="15" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="16" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="17" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="18" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="19" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="20" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="21" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="22" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="23" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="24" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="25" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="26" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="27" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="28" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="29" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="30" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="31" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="32" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="33" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="34" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="35" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="36" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="37" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="38" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="39" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="40" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="41" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="42" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="43" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="44" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="45" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="46" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="47" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="48" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="49" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="50" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="51" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="52" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="53" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="54" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="55" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="56" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="57" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="58" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="59" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="60" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="61" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="62" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="63" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="64" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="65" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="66" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="67" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="68" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="69" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="70" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="71" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="72" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="73" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="74" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="75" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="76" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="77" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="78" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="79" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="80" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="81" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="82" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="83" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="84" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="85" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="86" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="87" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="88" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="89" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="90" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="91" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="92" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="93" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="94" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="95" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="96" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="97" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="98" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="99" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="100" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="101" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="102" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="103" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="104" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="105" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="106" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="107" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="108" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="109" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="110" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="111" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="112" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="113" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="114" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="115" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="116" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="117" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="118" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="119" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="120" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="121" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="122" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="123" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="124" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="125" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="126" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="127" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="128" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="129" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="130" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="131" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="132" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="133" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="134" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="135" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="136" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="137" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="138" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="139" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="140" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="141" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="142" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="143" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="144" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="145" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="146" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="147" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="148" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="149" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="150" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="151" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="152" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="153" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="154" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="155" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="156" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="157" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="158" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="159" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="160" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="161" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="162" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="163" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="164" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="165" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="166" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="167" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="168" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="169" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="170" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="171" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="172" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="173" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="174" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="175" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="176" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="177" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="178" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="179" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="180" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="181" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="182" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="183" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="184" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="185" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="186" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="187" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="188" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="189" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="190" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="191" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="192" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="193" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="194" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="195" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="196" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="197" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="198" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="199" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="200" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="201" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="202" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="203" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="204" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="205" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="206" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="207" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="208" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="209" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="210" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="211" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="212" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="213" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="214" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="215" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="216" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="217" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="218" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="219" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="220" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="221" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="222" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="223" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="224" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="225" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="226" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="227" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="228" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="229" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="230" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="231" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="232" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="233" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="234" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="235" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="236" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="237" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="238" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="239" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="240" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="241" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="242" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="243" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="244" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="245" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="246" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="247" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="248" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="249" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="250" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="251" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="252" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="253" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="254" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="255" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="256" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="257" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="258" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="259" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="260" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="261" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="262" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="263" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="264" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="265" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="266" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="267" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="268" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="269" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="270" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="271" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="272" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="273" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="274" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="275" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="276" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="277" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="278" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="279" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="280" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="281" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="282" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="283" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="284" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="285" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="286" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="287" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="288" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="289" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="290" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="291" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="292" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="293" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="294" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="295" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="296" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="297" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="298" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="299" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="300" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="301" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="302" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="303" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="304" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="305" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="306" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="307" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="308" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="309" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="310" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="311" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="312" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="313" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="314" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="315" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="316" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="317" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="318" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="319" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="320" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="321" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="322" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="323" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="324" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="325" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="326" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="327" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="328" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="329" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="330" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="331" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="332" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="333" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="334" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="335" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="336" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="337" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="338" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="339" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="340" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="341" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="342" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="343" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="344" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="345" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="346" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="347" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="348" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="349" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="350" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="351" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="352" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="353" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="354" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="355" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="356" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="357" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="358" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="359" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="360" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="361" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="362" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="363" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="364" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="365" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="366" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="367" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="368" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="369" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="370" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="371" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="372" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="373" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="374" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="375" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="376" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="377" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="378" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="379" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="380" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="381" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="382" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="383" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="384" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="385" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="386" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="387" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="388" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="389" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="390" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="391" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="392" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="393" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="394" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="395" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="396" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="397" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="398" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="399" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="400" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="401" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="402" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="403" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="404" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="405" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="406" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="407" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="408" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="409" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="410" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="411" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="412" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="413" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="414" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="415" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="416" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="417" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="418" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="419" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="420" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="421" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="422" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="423" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="424" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="425" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="426" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="427" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="428" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="429" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="430" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="431" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="432" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="433" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="434" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="435" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="436" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="437" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="438" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="439" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="440" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="441" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="442" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="443" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="444" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="445" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="446" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="447" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="448" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="449" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="450" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="451" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="452" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="453" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="454" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="455" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="456" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="457" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="458" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="459" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="460" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="461" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="462" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="463" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="464" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="465" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="466" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="467" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="468" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="469" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="470" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="471" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="472" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="473" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="474" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="475" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="476" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="477" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="478" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="479" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="480" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="481" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="482" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="483" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="484" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="485" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="486" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="487" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="488" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="489" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="490" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="491" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="492" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="493" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="494" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="495" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="496" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="497" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="498" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="499" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="500" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="501" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="502" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="503" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="504" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="505" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="506" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="507" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="508" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="509" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="510" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="511" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="512" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="513" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="514" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="515" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="516" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="517" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="518" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="519" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="520" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="521" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="522" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="523" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="524" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="525" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="526" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="527" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="528" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="529" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="530" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="531" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="532" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="533" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="534" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="535" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="536" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="537" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="538" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="539" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="540" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="541" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="542" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="543" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="544" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="545" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="546" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="547" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="548" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="549" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="550" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="551" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="552" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="553" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="554" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="555" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="556" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="557" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="558" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="559" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="560" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="561" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="562" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="563" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="564" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="565" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="566" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="567" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="568" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="569" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="570" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="571" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="572" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="573" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="574" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="575" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="576" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="577" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="578" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="579" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="580" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="581" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="582" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="583" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="584" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="585" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="586" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="587" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="588" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="589" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="590" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="591" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="592" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="593" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="594" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="595" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="596" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="597" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="598" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="599" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="600" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="601" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="602" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="603" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="604" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="605" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="606" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="607" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="608" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="609" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="610" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="611" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="612" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="613" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="614" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="615" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="616" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="617" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="618" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="619" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="620" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="621" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="622" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="623" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="624" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="625" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="626" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="627" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="628" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="629" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="630" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="631" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="632" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="633" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="634" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="635" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="636" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="637" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="638" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="639" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="640" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="641" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="642" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="643" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="644" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="645" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="646" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="647" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="648" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="649" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="650" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="651" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="652" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="653" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="654" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="655" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="656" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="657" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="658" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="659" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="660" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="661" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="662" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="663" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="664" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="665" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="666" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="667" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="668" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="669" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="670" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="671" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="672" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="673" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="674" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="675" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="676" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="677" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="678" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="679" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="680" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="681" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="682" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="683" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="684" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="685" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="686" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="687" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="688" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="689" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="690" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="691" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="692" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="693" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="694" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="695" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="696" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="697" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="698" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="699" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="700" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="701" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="702" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="703" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="704" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="705" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="706" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="707" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="708" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="709" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="710" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="711" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="712" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="713" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="714" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="715" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="716" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="717" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="718" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="719" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="720" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="721" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="722" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="723" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="724" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="725" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="726" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="727" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="728" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="729" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="730" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="731" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="732" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="733" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="734" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="735" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="736" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="737" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="738" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="739" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="740" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="741" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="742" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="743" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="744" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="745" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="746" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="747" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="748" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="749" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="750" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="751" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="752" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="753" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="754" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="755" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="756" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="757" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="758" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="759" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="760" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="761" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="762" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="763" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="764" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="765" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="766" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="767" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="768" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="769" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="770" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="771" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="772" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="773" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="774" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="775" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="776" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="777" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="778" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="779" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="780" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="781" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="782" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="783" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="784" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="785" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="786" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="787" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="788" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="789" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="790" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="791" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="792" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="793" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="794" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="795" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="796" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="797" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="798" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="799" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="800" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="801" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="802" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="803" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="804" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="805" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="806" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="807" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="808" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="809" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="810" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="811" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="812" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="813" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="814" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="815" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="816" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="817" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="818" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="819" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="820" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="821" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="822" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="823" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="824" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="825" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="826" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="827" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="828" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="829" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="830" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="831" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="832" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="833" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="834" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="835" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="836" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="837" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="838" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="839" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="840" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="841" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="842" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="843" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="844" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="845" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="846" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="847" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="848" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="849" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="850" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="851" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="852" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="853" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="854" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="855" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="856" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="857" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="858" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="859" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="860" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="861" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="862" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="863" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="864" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="865" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="866" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="867" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="868" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="869" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="870" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+<weightgroup name="Central scale variation" combine="envelope">
+<weight id="871" MUR="0.5"  MUF="0.5"  PDF="244800" > MUR=0.5 MUF=0.5  </weight>
+<weight id="872" MUR="0.5"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="873" MUR="0.5"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="874" MUR="0.5"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="875" MUR="0.5"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="876" MUR="0.5"  MUF="1.0"  PDF="244800" > MUR=0.5  </weight>
+<weight id="877" MUR="0.5"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="878" MUR="0.5"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT  </weight>
+<weight id="879" MUR="0.5"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="880" MUR="0.5"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="881" MUR="0.5"  MUF="2.0"  PDF="244800" > MUR=0.5 MUF=2.0  </weight>
+<weight id="882" MUR="0.5"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="883" MUR="0.5"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="884" MUR="0.5"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="885" MUR="0.5"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=0.5 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="886" MUR="1.0"  MUF="0.5"  PDF="244800" > MUF=0.5  </weight>
+<weight id="887" MUR="1.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="888" MUR="1.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="889" MUR="1.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="890" MUR="1.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="891" MUR="1.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > dyn_scale_choice=sum pt  </weight>
+<weight id="892" MUR="1.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > dyn_scale_choice=HT  </weight>
+<weight id="893" MUR="1.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > dyn_scale_choice=HT/2  </weight>
+<weight id="894" MUR="1.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > dyn_scale_choice=sqrts  </weight>
+<weight id="895" MUR="1.0"  MUF="2.0"  PDF="244800" > MUF=2.0  </weight>
+<weight id="896" MUR="1.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="897" MUR="1.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="898" MUR="1.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="899" MUR="1.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUF=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="900" MUR="2.0"  MUF="0.5"  PDF="244800" > MUR=2.0 MUF=0.5  </weight>
+<weight id="901" MUR="2.0"  MUF="0.5"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sum pt  </weight>
+<weight id="902" MUR="2.0"  MUF="0.5"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT  </weight>
+<weight id="903" MUR="2.0"  MUF="0.5"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=HT/2  </weight>
+<weight id="904" MUR="2.0"  MUF="0.5"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=0.5 dyn_scale_choice=sqrts  </weight>
+<weight id="905" MUR="2.0"  MUF="1.0"  PDF="244800" > MUR=2.0  </weight>
+<weight id="906" MUR="2.0"  MUF="1.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="907" MUR="2.0"  MUF="1.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT  </weight>
+<weight id="908" MUR="2.0"  MUF="1.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="909" MUR="2.0"  MUF="1.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 dyn_scale_choice=sqrts  </weight>
+<weight id="910" MUR="2.0"  MUF="2.0"  PDF="244800" > MUR=2.0 MUF=2.0  </weight>
+<weight id="911" MUR="2.0"  MUF="2.0"  DYN_SCALE="1"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sum pt  </weight>
+<weight id="912" MUR="2.0"  MUF="2.0"  DYN_SCALE="2"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT  </weight>
+<weight id="913" MUR="2.0"  MUF="2.0"  DYN_SCALE="3"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=HT/2  </weight>
+<weight id="914" MUR="2.0"  MUF="2.0"  DYN_SCALE="4"  PDF="244800" > MUR=2.0 MUF=2.0 dyn_scale_choice=sqrts  </weight>
+</weightgroup> # scale
+<weightgroup name="NNPDF23_nlo_as_0119_qed" combine="replicas"> # 244800: NLO QCD + LO QED PDF set, alphas(MZ)=0.119. mem=0 ; average on replicas; mem=1-100 ; PDF replicas
+<weight id="915" MUR="1.0"  MUF="1.0"  PDF="244800" >  </weight>
+<weight id="916" MUR="1.0"  MUF="1.0"  PDF="244801" > PDF=244800 MemberID=1 </weight>
+<weight id="917" MUR="1.0"  MUF="1.0"  PDF="244802" > PDF=244800 MemberID=2 </weight>
+<weight id="918" MUR="1.0"  MUF="1.0"  PDF="244803" > PDF=244800 MemberID=3 </weight>
+<weight id="919" MUR="1.0"  MUF="1.0"  PDF="244804" > PDF=244800 MemberID=4 </weight>
+<weight id="920" MUR="1.0"  MUF="1.0"  PDF="244805" > PDF=244800 MemberID=5 </weight>
+<weight id="921" MUR="1.0"  MUF="1.0"  PDF="244806" > PDF=244800 MemberID=6 </weight>
+<weight id="922" MUR="1.0"  MUF="1.0"  PDF="244807" > PDF=244800 MemberID=7 </weight>
+<weight id="923" MUR="1.0"  MUF="1.0"  PDF="244808" > PDF=244800 MemberID=8 </weight>
+<weight id="924" MUR="1.0"  MUF="1.0"  PDF="244809" > PDF=244800 MemberID=9 </weight>
+<weight id="925" MUR="1.0"  MUF="1.0"  PDF="244810" > PDF=244800 MemberID=10 </weight>
+<weight id="926" MUR="1.0"  MUF="1.0"  PDF="244811" > PDF=244800 MemberID=11 </weight>
+<weight id="927" MUR="1.0"  MUF="1.0"  PDF="244812" > PDF=244800 MemberID=12 </weight>
+<weight id="928" MUR="1.0"  MUF="1.0"  PDF="244813" > PDF=244800 MemberID=13 </weight>
+<weight id="929" MUR="1.0"  MUF="1.0"  PDF="244814" > PDF=244800 MemberID=14 </weight>
+<weight id="930" MUR="1.0"  MUF="1.0"  PDF="244815" > PDF=244800 MemberID=15 </weight>
+<weight id="931" MUR="1.0"  MUF="1.0"  PDF="244816" > PDF=244800 MemberID=16 </weight>
+<weight id="932" MUR="1.0"  MUF="1.0"  PDF="244817" > PDF=244800 MemberID=17 </weight>
+<weight id="933" MUR="1.0"  MUF="1.0"  PDF="244818" > PDF=244800 MemberID=18 </weight>
+<weight id="934" MUR="1.0"  MUF="1.0"  PDF="244819" > PDF=244800 MemberID=19 </weight>
+<weight id="935" MUR="1.0"  MUF="1.0"  PDF="244820" > PDF=244800 MemberID=20 </weight>
+<weight id="936" MUR="1.0"  MUF="1.0"  PDF="244821" > PDF=244800 MemberID=21 </weight>
+<weight id="937" MUR="1.0"  MUF="1.0"  PDF="244822" > PDF=244800 MemberID=22 </weight>
+<weight id="938" MUR="1.0"  MUF="1.0"  PDF="244823" > PDF=244800 MemberID=23 </weight>
+<weight id="939" MUR="1.0"  MUF="1.0"  PDF="244824" > PDF=244800 MemberID=24 </weight>
+<weight id="940" MUR="1.0"  MUF="1.0"  PDF="244825" > PDF=244800 MemberID=25 </weight>
+<weight id="941" MUR="1.0"  MUF="1.0"  PDF="244826" > PDF=244800 MemberID=26 </weight>
+<weight id="942" MUR="1.0"  MUF="1.0"  PDF="244827" > PDF=244800 MemberID=27 </weight>
+<weight id="943" MUR="1.0"  MUF="1.0"  PDF="244828" > PDF=244800 MemberID=28 </weight>
+<weight id="944" MUR="1.0"  MUF="1.0"  PDF="244829" > PDF=244800 MemberID=29 </weight>
+<weight id="945" MUR="1.0"  MUF="1.0"  PDF="244830" > PDF=244800 MemberID=30 </weight>
+<weight id="946" MUR="1.0"  MUF="1.0"  PDF="244831" > PDF=244800 MemberID=31 </weight>
+<weight id="947" MUR="1.0"  MUF="1.0"  PDF="244832" > PDF=244800 MemberID=32 </weight>
+<weight id="948" MUR="1.0"  MUF="1.0"  PDF="244833" > PDF=244800 MemberID=33 </weight>
+<weight id="949" MUR="1.0"  MUF="1.0"  PDF="244834" > PDF=244800 MemberID=34 </weight>
+<weight id="950" MUR="1.0"  MUF="1.0"  PDF="244835" > PDF=244800 MemberID=35 </weight>
+<weight id="951" MUR="1.0"  MUF="1.0"  PDF="244836" > PDF=244800 MemberID=36 </weight>
+<weight id="952" MUR="1.0"  MUF="1.0"  PDF="244837" > PDF=244800 MemberID=37 </weight>
+<weight id="953" MUR="1.0"  MUF="1.0"  PDF="244838" > PDF=244800 MemberID=38 </weight>
+<weight id="954" MUR="1.0"  MUF="1.0"  PDF="244839" > PDF=244800 MemberID=39 </weight>
+<weight id="955" MUR="1.0"  MUF="1.0"  PDF="244840" > PDF=244800 MemberID=40 </weight>
+<weight id="956" MUR="1.0"  MUF="1.0"  PDF="244841" > PDF=244800 MemberID=41 </weight>
+<weight id="957" MUR="1.0"  MUF="1.0"  PDF="244842" > PDF=244800 MemberID=42 </weight>
+<weight id="958" MUR="1.0"  MUF="1.0"  PDF="244843" > PDF=244800 MemberID=43 </weight>
+<weight id="959" MUR="1.0"  MUF="1.0"  PDF="244844" > PDF=244800 MemberID=44 </weight>
+<weight id="960" MUR="1.0"  MUF="1.0"  PDF="244845" > PDF=244800 MemberID=45 </weight>
+<weight id="961" MUR="1.0"  MUF="1.0"  PDF="244846" > PDF=244800 MemberID=46 </weight>
+<weight id="962" MUR="1.0"  MUF="1.0"  PDF="244847" > PDF=244800 MemberID=47 </weight>
+<weight id="963" MUR="1.0"  MUF="1.0"  PDF="244848" > PDF=244800 MemberID=48 </weight>
+<weight id="964" MUR="1.0"  MUF="1.0"  PDF="244849" > PDF=244800 MemberID=49 </weight>
+<weight id="965" MUR="1.0"  MUF="1.0"  PDF="244850" > PDF=244800 MemberID=50 </weight>
+<weight id="966" MUR="1.0"  MUF="1.0"  PDF="244851" > PDF=244800 MemberID=51 </weight>
+<weight id="967" MUR="1.0"  MUF="1.0"  PDF="244852" > PDF=244800 MemberID=52 </weight>
+<weight id="968" MUR="1.0"  MUF="1.0"  PDF="244853" > PDF=244800 MemberID=53 </weight>
+<weight id="969" MUR="1.0"  MUF="1.0"  PDF="244854" > PDF=244800 MemberID=54 </weight>
+<weight id="970" MUR="1.0"  MUF="1.0"  PDF="244855" > PDF=244800 MemberID=55 </weight>
+<weight id="971" MUR="1.0"  MUF="1.0"  PDF="244856" > PDF=244800 MemberID=56 </weight>
+<weight id="972" MUR="1.0"  MUF="1.0"  PDF="244857" > PDF=244800 MemberID=57 </weight>
+<weight id="973" MUR="1.0"  MUF="1.0"  PDF="244858" > PDF=244800 MemberID=58 </weight>
+<weight id="974" MUR="1.0"  MUF="1.0"  PDF="244859" > PDF=244800 MemberID=59 </weight>
+<weight id="975" MUR="1.0"  MUF="1.0"  PDF="244860" > PDF=244800 MemberID=60 </weight>
+<weight id="976" MUR="1.0"  MUF="1.0"  PDF="244861" > PDF=244800 MemberID=61 </weight>
+<weight id="977" MUR="1.0"  MUF="1.0"  PDF="244862" > PDF=244800 MemberID=62 </weight>
+<weight id="978" MUR="1.0"  MUF="1.0"  PDF="244863" > PDF=244800 MemberID=63 </weight>
+<weight id="979" MUR="1.0"  MUF="1.0"  PDF="244864" > PDF=244800 MemberID=64 </weight>
+<weight id="980" MUR="1.0"  MUF="1.0"  PDF="244865" > PDF=244800 MemberID=65 </weight>
+<weight id="981" MUR="1.0"  MUF="1.0"  PDF="244866" > PDF=244800 MemberID=66 </weight>
+<weight id="982" MUR="1.0"  MUF="1.0"  PDF="244867" > PDF=244800 MemberID=67 </weight>
+<weight id="983" MUR="1.0"  MUF="1.0"  PDF="244868" > PDF=244800 MemberID=68 </weight>
+<weight id="984" MUR="1.0"  MUF="1.0"  PDF="244869" > PDF=244800 MemberID=69 </weight>
+<weight id="985" MUR="1.0"  MUF="1.0"  PDF="244870" > PDF=244800 MemberID=70 </weight>
+<weight id="986" MUR="1.0"  MUF="1.0"  PDF="244871" > PDF=244800 MemberID=71 </weight>
+<weight id="987" MUR="1.0"  MUF="1.0"  PDF="244872" > PDF=244800 MemberID=72 </weight>
+<weight id="988" MUR="1.0"  MUF="1.0"  PDF="244873" > PDF=244800 MemberID=73 </weight>
+<weight id="989" MUR="1.0"  MUF="1.0"  PDF="244874" > PDF=244800 MemberID=74 </weight>
+<weight id="990" MUR="1.0"  MUF="1.0"  PDF="244875" > PDF=244800 MemberID=75 </weight>
+<weight id="991" MUR="1.0"  MUF="1.0"  PDF="244876" > PDF=244800 MemberID=76 </weight>
+<weight id="992" MUR="1.0"  MUF="1.0"  PDF="244877" > PDF=244800 MemberID=77 </weight>
+<weight id="993" MUR="1.0"  MUF="1.0"  PDF="244878" > PDF=244800 MemberID=78 </weight>
+<weight id="994" MUR="1.0"  MUF="1.0"  PDF="244879" > PDF=244800 MemberID=79 </weight>
+<weight id="995" MUR="1.0"  MUF="1.0"  PDF="244880" > PDF=244800 MemberID=80 </weight>
+<weight id="996" MUR="1.0"  MUF="1.0"  PDF="244881" > PDF=244800 MemberID=81 </weight>
+<weight id="997" MUR="1.0"  MUF="1.0"  PDF="244882" > PDF=244800 MemberID=82 </weight>
+<weight id="998" MUR="1.0"  MUF="1.0"  PDF="244883" > PDF=244800 MemberID=83 </weight>
+<weight id="999" MUR="1.0"  MUF="1.0"  PDF="244884" > PDF=244800 MemberID=84 </weight>
+<weight id="1000" MUR="1.0"  MUF="1.0"  PDF="244885" > PDF=244800 MemberID=85 </weight>
+<weight id="1001" MUR="1.0"  MUF="1.0"  PDF="244886" > PDF=244800 MemberID=86 </weight>
+<weight id="1002" MUR="1.0"  MUF="1.0"  PDF="244887" > PDF=244800 MemberID=87 </weight>
+<weight id="1003" MUR="1.0"  MUF="1.0"  PDF="244888" > PDF=244800 MemberID=88 </weight>
+<weight id="1004" MUR="1.0"  MUF="1.0"  PDF="244889" > PDF=244800 MemberID=89 </weight>
+<weight id="1005" MUR="1.0"  MUF="1.0"  PDF="244890" > PDF=244800 MemberID=90 </weight>
+<weight id="1006" MUR="1.0"  MUF="1.0"  PDF="244891" > PDF=244800 MemberID=91 </weight>
+<weight id="1007" MUR="1.0"  MUF="1.0"  PDF="244892" > PDF=244800 MemberID=92 </weight>
+<weight id="1008" MUR="1.0"  MUF="1.0"  PDF="244893" > PDF=244800 MemberID=93 </weight>
+<weight id="1009" MUR="1.0"  MUF="1.0"  PDF="244894" > PDF=244800 MemberID=94 </weight>
+<weight id="1010" MUR="1.0"  MUF="1.0"  PDF="244895" > PDF=244800 MemberID=95 </weight>
+<weight id="1011" MUR="1.0"  MUF="1.0"  PDF="244896" > PDF=244800 MemberID=96 </weight>
+<weight id="1012" MUR="1.0"  MUF="1.0"  PDF="244897" > PDF=244800 MemberID=97 </weight>
+<weight id="1013" MUR="1.0"  MUF="1.0"  PDF="244898" > PDF=244800 MemberID=98 </weight>
+<weight id="1014" MUR="1.0"  MUF="1.0"  PDF="244899" > PDF=244800 MemberID=99 </weight>
+<weight id="1015" MUR="1.0"  MUF="1.0"  PDF="244900" > PDF=244800 MemberID=100 </weight>
+</weightgroup>
+</initrwgt>
 <MGGenerationInfo>
 #  Number of Events        :       10000
-#  Integrated weight (pb)  :       0.00013259
+#  Integrated weight (pb)  :       0.00013256
+</MGGenerationInfo>
+<MGGenerationInfo>
+#  Number of Events        :       10000
+#  Integrated weight (pb)  :       0.00014834
 </MGGenerationInfo>
 </header>
+<init>
+2212 2212 6.500000e+03 6.500000e+03 0 0 244800 244800 -4 1
+1.325600e-04 1.412600e-07 1.325600e-04 1
+<generator name='MadGraph5_aMC@NLO' version='3.6.3'>please cite 1405.0301 </generator>
+</init>
 </LesHouchesEvents>
