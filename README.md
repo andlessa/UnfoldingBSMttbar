@@ -1,6 +1,21 @@
 # Unfolding BSM @ ttbar
 
-Code, model files and data for the study of top-philic new physics in top-pair production.
+Code, model files and data for the paper:
+
+> **Testing the Spin of New Physics with Top Precision Measurements**
+>
+> André Lessa<sup>a</sup>, Vinícius Rocca<sup>a</sup> and Veronica Sanz<sup>b</sup>
+>
+> <sup>a</sup> Instituto de Física, Universidade de São Paulo, São Paulo, 05508-090 SP, Brazil<br>
+> <sup>b</sup> Instituto de Física Corpuscular (IFIC), Universidad de Valencia-CSIC, E-46980 Valencia, Spain
+
+## Authors
+
+| Author | Affiliation | ORCID |
+|--------|-------------|-------|
+| André Lessa | Instituto de Física, Universidade de São Paulo (USP) | [0000-0002-5251-7891](https://orcid.org/0000-0002-5251-7891) |
+| Vinícius Rocca | Instituto de Física, Universidade de São Paulo (USP) | [0000-0001-8249-8014](https://orcid.org/0000-0001-8249-8014) |
+| Veronica Sanz | Instituto de Física Corpuscular (IFIC), Universidad de Valencia-CSIC | [0000-0001-8864-2507](https://orcid.org/0000-0001-8864-2507) |
 
 ## About the project
 
