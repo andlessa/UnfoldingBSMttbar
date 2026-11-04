@@ -10,8 +10,10 @@ cd $homeDIR
 
 #madgraph="MG5_aMC_v3.8.0.tar.gz"
 #URL=https://launchpad.net/mg5amcnlo/3.0/3.8.x/+download/$madgraph
-madgraph="MG5_aMC_v3.6.7.tar.gz"
-URL=https://launchpad.net/mg5amcnlo/3.0/3.6.x/+download/$madgraph
+# MadGraph 3.6.3 (version used in this project). Launchpad only keeps the latest
+# 3.6.x release, so the official GitHub tag is used instead.
+madgraph="v3.6.3.tar.gz"
+URL=https://github.com/mg5amcnlo/mg5amcnlo/archive/refs/tags/$madgraph
 # Use github version with fix for printing intermediate particles
 #madgraph="mg5amcnlo-3.6.3.zip"
 echo -n "Install MadGraph (y/n)? "
@@ -21,7 +23,7 @@ if echo "$answer" | grep -iq "^y" ;then
            rm -rf MG5
         fi
 	mkdir MG5;
-	echo "[installer] getting MadGraph5"; wget $URL 2>/dev/null || curl -O $URL; tar -zxf $madgraph -C MG5 --strip-components 1;
+	echo "[installer] getting MadGraph5"; wget -O $madgraph $URL 2>/dev/null || curl -L -o $madgraph $URL; tar -zxf $madgraph -C MG5 --strip-components 1;
 	#cp $madgraph $madgraph"_bak"
 	#unzip $madgraph;
 	#mv mg5amcnlo-3.6.3 MG5;
