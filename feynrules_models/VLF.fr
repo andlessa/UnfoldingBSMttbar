@@ -1,0 +1,90 @@
+(***************************************************************)
+(***************************************************************)
+(** FeynRules model file for a simplified model          *******)
+(** with a vector like fermion top partner and a scalar    *****)
+(** singlet (DM).                                             **)
+(******                                                        *)
+(****** A. Lessa and V. Rocca                                  *)
+(******                                                        *)
+(****** Feel free to use this model file!                      *)
+(***************************************************************)
+(***************************************************************)
+
+M$ModelName = "UV-BSM-ToyModel";
+
+M$Information = {Authors -> {"Andre Lessa", "Vinicius Rocca"}, 
+                 Version -> "1.0",
+                 Date -> "xx.06.2025"};
+
+FeynmanGauge = True;
+
+M$InteractionOrderHierarchy = {  {NP1, 1}, {NP2, 1}, {NP3,1}, {QCD, 2}, {QED,3} };
+
+(* ************************** *)
+(* *****   Parameters   ***** *)
+(* ************************** *)
+
+M$Parameters = {
+
+ (* New Physics (UV) Parameters *)
+  yDM  == { TeX->Subscript[y,DM],  ComplexParameter -> False, ParameterType->External, Value->1.0, InteractionOrder->{NP1 ,1}, Description->"Dark fermion - heavy stop - SM RH top Yukawa"},
+
+  lamHs  == { TeX->Subscript[\[Lambda],Hs],  ComplexParameter -> False, ParameterType->External, Value->1.0, InteractionOrder->{NP2 ,1}, Description->"Dark scalar square - SM Higgs doublet contraction"},
+
+  lamS == { TeX->Subscript[\[Lambda],s],  ComplexParameter -> False, ParameterType->External, Value->1.0, InteractionOrder->{NP3 ,1}, Description->"Quartic dark scalar interaction"}
+
+};
+
+(* ************************** *)
+(* **** Particle classes **** *)
+(* ************************** *)
+M$ClassesDescription = {
+
+
+(* The top partner fermion *)
+F[16] == { 
+         ClassName -> psiT,
+         Indices -> {Index[Colour]}, 
+         SelfConjugate-> False,
+         Unphysical     -> False, 
+         QuantumNumbers -> {Q -> 2/3}, 
+         Mass-> {mPsiT,400.}, 
+         Width-> {WPsiT,1.0},
+         PDG->{5000006}, 
+         PropagatorLabel->"psiT", 
+         PropagatorType->Straight, 
+         ParticleName     -> "psiT" ,
+         AntiParticleName -> "psiT~",
+         FullName         -> {"Vector like fermion top partner"} },
+
+(* The dark Scalar *)
+S[5] == { 
+          ClassName        -> SDM,
+          SelfConjugate    -> True,
+          Unphysical       -> False,
+          Mass             -> {mSDM,100.},
+          Width            -> 0,
+          QuantumNumbers   -> {},
+          PropagatorLabel  -> {"SDM"},
+          PropagatorType   -> ScalarDash, 
+          PDG              -> {5000022},
+          ParticleName     -> {"~SDM" },
+          FullName         -> {"Dark Scalar"} }
+};
+
+(* ************************** *)
+(* *****   Lagrangian   ***** *)
+(* ************************** *)
+
+(* gauge kinetic and mass terms *)
+
+Lkin := I*psiTbar.Ga[mu].DC[psiT, mu] - mPsiT psiTbar.psiT + (1/2)*DC[SDM,mu] DC[SDM,mu] - (1/2)*(mSDM^2 - lamHs*vev^2/4)*SDM^2 - (1/24)*lamS*SDM^4;                     
+
+(* DM-Scalar-Top coupling *)
+
+LYDM := -yDM SDM * (ProjP[sp1,sp2] psiTbar[sp1,aa].uq[sp2,3,aa]);
+
+LHs := ExpandIndices[-(1/4)*lamHs*(Phibar[ii] Phi[ii] SDM SDM)];
+
+LNP := Lkin + LHs + LYDM + HC[LYDM];
+

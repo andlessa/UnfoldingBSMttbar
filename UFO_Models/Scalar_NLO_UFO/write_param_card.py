@@ -117,6 +117,7 @@ class ParamCardWriter(object):
     def write_dep_param_block(self, lhablock):
         import cmath
         from parameters import all_parameters
+        from function_library import complexconjugate
         for parameter in all_parameters:
             exec("%s = %s" % (parameter.name, parameter.value))
         text = "##  Not dependent paramater.\n"
