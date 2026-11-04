@@ -1,0 +1,753 @@
+<?xml version="1.0" ?>
+<smodelsOutput>
+    <ExptRes_List>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-20-002</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t-,MET),(t+,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>5.365</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>2.92092</r>
+            <r_expected>2.368313</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>4.35</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-19-010</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>7.08034</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>1.910714</r>
+            <r_expected>1.794547</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>6.64987</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-19-009</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>8.36673</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>1.815366</r>
+            <r_expected>1.518634</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>6.99914</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-19-006</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>15.913</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>1.486134</r>
+            <r_expected>0.7984667</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>8.5497</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-19-006-agg</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>(combined)</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>combined</dataType>
+            <expected_upper_limit_fb>2.907048</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>252.9841</nll>
+            <nll_SM>249.5166</nll_SM>
+            <nll_min>249.5166</nll_min>
+            <r>1.476465</r>
+            <r_expected>0.7323905</r_expected>
+            <theory_prediction_fb>2.129094</theory_prediction_fb>
+            <upper_limit_fb>1.442021</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-036</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>22.359</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.9832082</r>
+            <r_expected>0.5682723</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>12.923</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-051</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>19.379</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.8606652</r>
+            <r_expected>0.6556582</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>14.763</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2018-08</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>None</expected_upper_limit_fb>
+            <lumi_fb-1>139.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.8470667</r>
+            <r_expected>None</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>15.0</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-050-agg</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>(combined)</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>combined</dataType>
+            <expected_upper_limit_fb>1.061245</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>126.7379</nll>
+            <nll_SM>125.2897</nll_SM>
+            <nll_min>125.2897</nll_min>
+            <r>0.6678134</r>
+            <r_expected>0.4553883</r_expected>
+            <theory_prediction_fb>0.4832785</theory_prediction_fb>
+            <upper_limit_fb>0.723673</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-033</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>24.4425</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.6180653</r>
+            <r_expected>0.5198323</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>20.5577</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-050</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>14.709</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.5831383</r>
+            <r_expected>0.8638249</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>21.789</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-19-011</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>22.0399</expected_upper_limit_fb>
+            <lumi_fb-1>137.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.5487676</r>
+            <r_expected>0.5764999</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>23.1537</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2018-12</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>17.35</expected_upper_limit_fb>
+            <lumi_fb-1>139.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.4645704</r>
+            <r_expected>0.7323343</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>27.35</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2016-15</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>None</expected_upper_limit_fb>
+            <lumi_fb-1>36.1</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.463638</r>
+            <r_expected>None</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>27.405</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2016-16</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>None</expected_upper_limit_fb>
+            <lumi_fb-1>36.1</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.4088949</r>
+            <r_expected>None</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>31.074</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2016-16</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>tN_med</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>efficiencyMap</dataType>
+            <expected_upper_limit_fb>0.528</expected_upper_limit_fb>
+            <lumi_fb-1>36.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>5.70611</nll>
+            <nll_SM>6.738228</nll_SM>
+            <nll_min>5.682625</nll_min>
+            <r>0.3746278</r>
+            <r_expected>0.6108987</r_expected>
+            <theory_prediction_fb>0.3225545</theory_prediction_fb>
+            <upper_limit_fb>0.861</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2018-08</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>SRDF220</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>efficiencyMap</dataType>
+            <expected_upper_limit_fb>0.0372</expected_upper_limit_fb>
+            <lumi_fb-1>139.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>2.377732</nll>
+            <nll_SM>2.016106</nll_SM>
+            <nll_min>2.016106</nll_min>
+            <r>0.3285509</r>
+            <r_expected>0.3285509</r_expected>
+            <theory_prediction_fb>0.01222209</theory_prediction_fb>
+            <upper_limit_fb>0.0372</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2018-12</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>SRBTT</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>efficiencyMap</dataType>
+            <expected_upper_limit_fb>0.155</expected_upper_limit_fb>
+            <lumi_fb-1>139.0</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>6.182387</nll>
+            <nll_SM>7.922927</nll_SM>
+            <nll_min>5.887377</nll_min>
+            <r>0.2850536</r>
+            <r_expected>0.595854</r_expected>
+            <theory_prediction_fb>0.09235737</theory_prediction_fb>
+            <upper_limit_fb>0.324</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2016-17</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>None</expected_upper_limit_fb>
+            <lumi_fb-1>36.1</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.1971298</r>
+            <r_expected>None</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>64.455</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-009</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>53.07</expected_upper_limit_fb>
+            <lumi_fb-1>2.3</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.1769268</r>
+            <r_expected>0.2394196</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>71.815</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-17-010</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>72.0665</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.1768234</r>
+            <r_expected>0.1763094</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>71.857</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>CMS-SUS-16-033</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>SR6_Njet2_Nb2_HT500_MHT500</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>efficiencyMap</dataType>
+            <expected_upper_limit_fb>1.85</expected_upper_limit_fb>
+            <lumi_fb-1>35.9</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>7.873632</nll>
+            <nll_SM>8.058678</nll_SM>
+            <nll_min>7.858107</nll_min>
+            <r>0.163394</r>
+            <r_expected>0.2172699</r_expected>
+            <theory_prediction_fb>0.4019492</theory_prediction_fb>
+            <upper_limit_fb>2.46</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2015-02</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>None</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>upperLimit</dataType>
+            <expected_upper_limit_fb>None</expected_upper_limit_fb>
+            <lumi_fb-1>3.2</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <r>0.1245686</r>
+            <r_expected>None</r_expected>
+            <theory_prediction_fb>12.706</theory_prediction_fb>
+            <upper_limit_fb>102.0</upper_limit_fb>
+        </ExptRes>
+        <ExptRes>
+            <AnalysisID>ATLAS-SUSY-2015-02</AnalysisID>
+            <AnalysisSqrts_TeV>13.0</AnalysisSqrts_TeV>
+            <DataSetID>SR1</DataSetID>
+            <FinalStates_List>
+                <FinalStates>PV &gt; (t,MET),(t,MET)</FinalStates>
+            </FinalStates_List>
+            <Mass_GeV_List>
+                <Mass_GeV>('~st~', 825.0)</Mass_GeV>
+                <Mass_GeV>('~st', 825.0)</Mass_GeV>
+                <Mass_GeV>('~chi', 400.0)</Mass_GeV>
+            </Mass_GeV_List>
+            <TxNames_List>
+                <TxNames>T2tt</TxNames>
+            </TxNames_List>
+            <Width_GeV_List>
+                <Width_GeV>('~st~', 8.200605)</Width_GeV>
+                <Width_GeV>('~st', 8.200605)</Width_GeV>
+                <Width_GeV>('~chi', 'stable')</Width_GeV>
+            </Width_GeV_List>
+            <dataType>efficiencyMap</dataType>
+            <expected_upper_limit_fb>1.95</expected_upper_limit_fb>
+            <lumi_fb-1>3.2</lumi_fb-1>
+            <maxcond>0.0</maxcond>
+            <nll>4.311424</nll>
+            <nll_SM>5.317383</nll_SM>
+            <nll_min>2.758769</nll_min>
+            <r>0.0850118</r>
+            <r_expected>0.1918215</r_expected>
+            <theory_prediction_fb>0.3740519</theory_prediction_fb>
+            <upper_limit_fb>4.4</upper_limit_fb>
+        </ExptRes>
+    </ExptRes_List>
+    <OutputStatus>
+        <checkinput>True</checkinput>
+        <combinesrs>True</combinesrs>
+        <computestatistics>True</computestatistics>
+        <database_version>3.1.1</database_version>
+        <decomposition_status>1</decomposition_status>
+        <docompress>True</docompress>
+        <doinvisible>True</doinvisible>
+        <experimentalfeatures>False</experimentalfeatures>
+        <file_status>1</file_status>
+        <input_file>../processFolders/Scalar_SLHAs/Scalar_825_400.slha</input_file>
+        <maxcond>0.2</maxcond>
+        <minmassgap>5.0</minmassgap>
+        <model>/home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat</model>
+        <ncpus>-1</ncpus>
+        <promptwidth>1e-11</promptwidth>
+        <reportallsrs>False</reportallsrs>
+        <sigmacut>5e-06</sigmacut>
+        <smodels_version>3.1.1</smodels_version>
+        <stablewidth>1e-25</stablewidth>
+        <testcoverage>True</testcoverage>
+        <warnings>Input file ok</warnings>
+    </OutputStatus>
+    <Total_xsec_for_missing_topologies_fb>0.0</Total_xsec_for_missing_topologies_fb>
+    <Total_xsec_for_missing_topologies_with_displaced_decays_fb>0.0</Total_xsec_for_missing_topologies_with_displaced_decays_fb>
+    <Total_xsec_for_missing_topologies_with_prompt_decays_fb>0.0</Total_xsec_for_missing_topologies_with_prompt_decays_fb>
+    <Total_xsec_for_topologies_outside_the_grid_fb>0.0</Total_xsec_for_topologies_outside_the_grid_fb>
+    <missing_topologies_List/>
+    <missing_topologies_with_displaced_decays_List/>
+    <missing_topologies_with_prompt_decays_List/>
+    <topologies_outside_the_grid_List/>
+</smodelsOutput>

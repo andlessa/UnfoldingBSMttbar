@@ -1,0 +1,149 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_450_305.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ CMS-SUS-19-006-agg  1.30E+01    0.0  6.152E+00  1.517E+00  4.056E+00  2.207E+00
+ Signal Region:  (combined)
+ Txnames:  T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff, T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+ Likelihoods: nll, nll_min, nll_SM =  2.647E+02,  2.495E+02,  2.495E+02
+--------------------------------------------------------------------------------
+     CMS-SUS-20-002  1.30E+01    0.0  5.702E+02  3.054E+02  1.867E+00  2.163E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W-,b,MET),(W+,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-006  1.30E+01    0.0  5.702E+02  3.126E+02  1.824E+00  1.116E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-08  1.30E+01    0.0  5.702E+02  3.800E+02  1.501E+00 N/A
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-009  1.30E+01    0.0  5.702E+02  4.123E+02  1.383E+00  1.528E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-16-033  1.30E+01    0.0  5.702E+02  4.515E+02  1.263E+00  7.660E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  5.702E+02  5.257E+02  1.085E+00  1.118E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-16-033  1.30E+01    0.0  3.204E+00  3.170E+00  1.011E+00  6.407E-01
+ Signal Region:  SR11_Njet7_Nb1_HT300_MHT300
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+ Likelihoods: nll, nll_min, nll_SM =  1.219E+01,  1.004E+01,  1.004E+01
+--------------------------------------------------------------------------------
+     CMS-SUS-19-010  1.30E+01    0.0  5.702E+02  5.721E+02  9.968E-01  1.170E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-15  1.30E+01    0.0  5.702E+02  5.971E+02  9.550E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-16-051  1.30E+01    0.0  5.702E+02  6.569E+02  8.681E-01  7.224E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-08  1.30E+01    0.0  3.499E-02  4.750E-02  7.366E-01  7.366E-01
+ Signal Region:  SRSFt
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+ Likelihoods: nll, nll_min, nll_SM =  4.083E+00,  2.755E+00,  2.755E+00
+--------------------------------------------------------------------------------
+     CMS-SUS-16-036  1.30E+01    0.0  5.702E+02  8.178E+02  6.973E-01  5.023E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-16  1.30E+01    0.0  5.702E+02  8.619E+02  6.616E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  2.802E-02  5.070E-02  5.526E-01  9.217E-01
+ Signal Region:  SRC5
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+ Likelihoods: nll, nll_min, nll_SM =  2.680E+00,  2.195E+00,  2.507E+00
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-16  1.30E+01    0.0  4.618E-01  8.610E-01  5.363E-01  5.036E-01
+ Signal Region:  bWN
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+ Likelihoods: nll, nll_min, nll_SM =  7.311E+00,  6.735E+00,  6.735E+00
+--------------------------------------------------------------------------------
+     CMS-SUS-17-010  1.30E+01    0.0  5.702E+02  1.164E+03  4.899E-01  5.257E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-17  1.30E+01    0.0  5.702E+02  1.918E+03  2.972E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-011  1.30E+01    0.0  5.702E+02  2.009E+03  2.839E-01  3.597E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-16-050  1.30E+01    0.0  5.702E+02  2.869E+03  1.988E-01  4.159E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttoff
+ Final States: PV > (W,b,MET),(W,b,MET)
+
+ 
+================================================================================
+The highest r value is = 4.05633 from CMS-SUS-19-006-agg (r_expected=2.20691)
+CMS analysis with highest available r_expected: CMS-SUS-19-006-agg, r_expected=2.20691, r_obs=4.05633
+ATLAS analysis with highest available r_expected: ATLAS-SUSY-2018-12, r_expected=1.11844, r_obs=1.08476
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

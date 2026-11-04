@@ -1,0 +1,70 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/VLF_SLHAs/VLF_1250_800.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/VLF/pp2psiTpsiTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+     CMS-SUS-20-002  1.30E+01    0.0  5.253E+00  2.010E+00  2.613E+00  1.818E+00
+ Signal Region:  (UL)
+ Txnames:  T2tt
+ Final States: PV > (t-,MET),(t+,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-009  1.30E+01    0.0  5.253E+00  3.897E+00  1.348E+00  1.068E+00
+ Signal Region:  (UL)
+ Txnames:  T2tt
+ Final States: PV > (t,MET),(t,MET)
+--------------------------------------------------------------------------------
+ CMS-SUS-19-006-agg  1.30E+01    0.0  1.193E+00  1.089E+00  1.095E+00  5.737E-01
+ Signal Region:  (combined)
+ Txnames:  T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt, T2tt
+ Final States: PV > (t,MET),(t,MET)
+ Likelihoods: nll, nll_min, nll_SM =  2.519E+02,  2.495E+02,  2.495E+02
+--------------------------------------------------------------------------------
+     CMS-SUS-19-006  1.30E+01    0.0  5.253E+00  5.069E+00  1.036E+00  6.610E-01
+ Signal Region:  (UL)
+ Txnames:  T2tt
+ Final States: PV > (t,MET),(t,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-16-033  1.30E+01    0.0  2.774E-01  2.460E+00  1.128E-01  1.499E-01
+ Signal Region:  SR6_Njet2_Nb2_HT500_MHT500
+ Txnames:  T2tt
+ Final States: PV > (t,MET),(t,MET)
+ Likelihoods: nll, nll_min, nll_SM =  7.909E+00,  7.858E+00,  8.059E+00
+
+ 
+================================================================================
+The highest r value is = 2.61333 from CMS-SUS-20-002 (r_expected=1.81758)
+CMS analysis with highest available r_expected: CMS-SUS-20-002, r_expected=1.81758, r_obs=2.61333
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

@@ -1,0 +1,74 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_350_295.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+     CMS-SUS-19-010  1.30E+01    0.0  2.251E+03  4.335E+02  5.193E+00  5.480E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttC
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-18-004  1.30E+01    0.0  2.533E+03  1.587E+03  1.596E+00  1.596E+00
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-08  1.30E+01    0.0  2.335E+03  1.685E+03  1.386E+00 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+ CMS-PAS-SUS-16-052  1.30E+01    0.0  2.368E+03  1.765E+03  1.342E+00 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-17-005  1.30E+01    0.0  2.303E+03  1.769E+03  1.302E+00  1.758E+00
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+CMS-PAS-SUS-16-052-agg  1.30E+01    0.0  5.362E+00  4.300E+00  1.247E+00  1.127E+00
+ Signal Region:  (combined)
+ Txnames:  T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+ Likelihoods: nll, nll_min, nll_SM =  1.002E+02,  9.697E+01,  9.697E+01
+
+ 
+================================================================================
+The highest r value is = 5.19343 from CMS-SUS-19-010 (r_expected=5.47958)
+CMS analysis with highest available r_expected: CMS-SUS-19-010, r_expected=5.47958, r_obs=5.19343
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

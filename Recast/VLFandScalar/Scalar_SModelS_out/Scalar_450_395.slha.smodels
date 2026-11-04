@@ -1,0 +1,91 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_450_395.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  1.148E-01  5.300E-02  2.167E+00  1.775E+00
+ Signal Region:  SRD2
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+ Likelihoods: nll, nll_min, nll_SM =  1.076E+01,  3.583E+00,  3.583E+00
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  5.681E+02  2.666E+02  2.130E+00  1.928E+00
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-010  1.30E+01    0.0  5.630E+02  2.765E+02  2.036E+00  2.414E+00
+ Signal Region:  (UL)
+ Txnames:  T2ttC
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-18-004  1.30E+01    0.0  6.223E+02  6.085E+02  1.023E+00  8.670E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-08  1.30E+01    0.0  5.738E+02  6.364E+02  9.017E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+ CMS-PAS-SUS-16-052  1.30E+01    0.0  5.870E+02  8.550E+02  6.866E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-17-005  1.30E+01    0.0  5.709E+02  8.562E+02  6.668E-01  9.311E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+CMS-PAS-SUS-16-052-agg  1.30E+01    0.0  2.337E+00  3.677E+00  6.355E-01  5.281E-01
+ Signal Region:  (combined)
+ Txnames:  T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+ Likelihoods: nll, nll_min, nll_SM =  9.815E+01,  9.697E+01,  9.697E+01
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-17  1.30E+01    0.0  2.834E+01  1.758E+02  1.612E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbWWoff
+ Final States: PV > (b,nu,l,MET),(b,nu,l,MET)
+
+ 
+================================================================================
+The highest r value is = 2.16659 from ATLAS-SUSY-2018-12 (r_expected=1.77479)
+CMS analysis with highest available r_expected: CMS-SUS-19-010, r_expected=2.41450, r_obs=2.03599
+ATLAS analysis with highest available r_expected: ATLAS-SUSY-2018-12, r_expected=1.92826, r_obs=2.13038
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

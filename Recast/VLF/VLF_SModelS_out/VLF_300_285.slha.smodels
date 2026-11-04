@@ -1,0 +1,104 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/VLF_SLHAs/VLF_300_285.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/VLF/pp2psiTpsiTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  3.278E+04  3.683E+04  8.901E-01  7.277E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  3.631E-02  4.200E-02  8.645E-01  6.602E-01
+ Signal Region:  SRD0
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+ Likelihoods: nll, nll_min, nll_SM =  5.244E+00,  3.157E+00,  3.157E+00
+--------------------------------------------------------------------------------
+     CMS-SUS-18-004  1.30E+01    0.0  3.576E+04  1.089E+05  3.283E-01  3.283E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+ CMS-PAS-SUS-16-052  1.30E+01    0.0  3.381E+04  1.189E+05  2.843E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-17-005  1.30E+01    0.0  3.288E+04  1.191E+05  2.760E-01  3.198E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2018-08  1.30E+01    0.0  3.298E+04  1.310E+05  2.517E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,nu,l-,MET),(b,l+,nu,MET)
+--------------------------------------------------------------------------------
+CMS-PAS-SUS-16-052-agg  1.30E+01    0.0  7.676E-01  5.779E+00  1.328E-01  2.739E-01
+ Signal Region:  (combined)
+ Txnames:  T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff, T2bbWWoff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+ Likelihoods: nll, nll_min, nll_SM =  9.584E+01,  9.439E+01,  9.697E+01
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-16  1.30E+01    0.0  3.103E-02  7.780E-01  3.988E-02  5.322E-02
+ Signal Region:  bffN
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+ Likelihoods: nll, nll_min, nll_SM =  6.111E+00,  5.772E+00,  6.209E+00
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-17  1.30E+01    0.0  1.629E+03  9.430E+04  1.727E-02 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbWWoff
+ Final States: PV > (b,nu,l,MET),(b,nu,l,MET)
+--------------------------------------------------------------------------------
+ ATLAS-SUSY-2016-16  1.30E+01    0.0  3.288E+04  4.126E+06  7.969E-03 N/A
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,nu,l,MET)
+
+ 
+================================================================================
+The highest r value is = 0.89012 from ATLAS-SUSY-2018-12 (r_expected=0.72772)
+CMS analysis with highest available r_expected: CMS-SUS-18-004, r_expected=0.32830, r_obs=0.32830
+ATLAS analysis with highest available r_expected: ATLAS-SUSY-2018-12, r_expected=0.72772, r_obs=0.89012
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  3.065E+04
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+missing topologies with displaced decays with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          1.431E+04    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          9.571E+03    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          3.690E+03    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          1.600E+03    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          1.234E+03    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          2.378E+02    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

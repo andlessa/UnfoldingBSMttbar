@@ -1,0 +1,150 @@
+smodelsOutput = {
+'OutputStatus' : {
+    'sigmacut' : 5e-06,
+    'minmassgap' : 5.0,
+    'maxcond' : 0.2,
+    'ncpus' : -1,
+    'model' : '/home/vinicius/EFT_ToyModel/processFolders/VLF/pp2psiTpsiTbar/Cards/param_card.dat',
+    'promptwidth' : 1e-11,
+    'stablewidth' : 1e-25,
+    'checkinput' : True,
+    'doinvisible' : True,
+    'docompress' : True,
+    'computestatistics' : True,
+    'testcoverage' : True,
+    'combinesrs' : True,
+    'reportallsrs' : False,
+    'experimentalfeatures' : False,
+    'file status' : 1,
+    'decomposition status' : 1,
+    'warnings' : 'Input file ok',
+    'input file' : '../processFolders/VLF_SLHAs/VLF_250_210.slha',
+    'database version' : '3.1.1',
+    'smodels version' : '3.1.1'
+},
+'ExptRes' : [
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 81265.4,
+        'upper limit (fb)' : 3859.8,
+        'expected upper limit (fb)' : None,
+        'TxNames' : ['T2bbWWoff'],
+        'FinalStates' : ['PV > (b,jet,jet,MET),(b,nu,l,MET)'],
+        'Mass (GeV)' : [
+            ('psit', 250.0),
+            ('psit~', 250.0),
+            ('~sdm', 210.0)
+        ],
+        'AnalysisID' : 'CMS-PAS-SUS-16-052',
+        'DataSetID' : None,
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 35.9,
+        'dataType' : 'upperLimit',
+        'r' : 21.0543,
+        'r_expected' : None,
+        'Width (GeV)' : [
+            ('psit', 3.113849e-10),
+            ('psit~', 3.113849e-10),
+            ('~sdm', 'stable')
+        ]
+    },
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 79040.55,
+        'upper limit (fb)' : 3873.2,
+        'expected upper limit (fb)' : 3801.6,
+        'TxNames' : ['T2bbffff'],
+        'FinalStates' : ['PV > (b,jet,jet,MET),(b,nu,l,MET)'],
+        'Mass (GeV)' : [
+            ('psit', 250.0),
+            ('psit~', 250.0),
+            ('~sdm', 210.0)
+        ],
+        'AnalysisID' : 'CMS-SUS-17-005',
+        'DataSetID' : None,
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 35.9,
+        'dataType' : 'upperLimit',
+        'r' : 20.40704,
+        'r_expected' : 20.79139,
+        'Width (GeV)' : [
+            ('psit', 3.113849e-10),
+            ('psit~', 3.113849e-10),
+            ('~sdm', 'stable')
+        ]
+    },
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 96.46474,
+        'upper limit (fb)' : 5.94541,
+        'expected upper limit (fb)' : 6.030276,
+        'TxNames' : ['T2bbWWoff'],
+        'FinalStates' : ['PV > (b,jet,jet,MET),(b,nu,l,MET)'],
+        'Mass (GeV)' : [('psit/psit~', 250.0), ('~sdm', 210.0)],
+        'AnalysisID' : 'CMS-PAS-SUS-16-052-agg',
+        'DataSetID' : '(combined)',
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 35.9,
+        'dataType' : 'combined',
+        'r' : 16.22508,
+        'r_expected' : 15.99674,
+        'Width (GeV)' : [('psit/psit~', 3.1138e-10), ('~sdm', 'stable')],
+        'nll' : 476.7225,
+        'nll_min' : 96.96747,
+        'nll_SM' : 96.96747
+    },
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 5.526047,
+        'upper limit (fb)' : 0.778,
+        'expected upper limit (fb)' : 0.583,
+        'TxNames' : ['T2bbffff'],
+        'FinalStates' : ['PV > (b,jet,jet,MET),(b,nu,l,MET)'],
+        'Mass (GeV)' : [('psit/psit~', 250.0), ('~sdm', 210.0)],
+        'AnalysisID' : 'ATLAS-SUSY-2016-16',
+        'DataSetID' : 'bffN',
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 36.0,
+        'dataType' : 'efficiencyMap',
+        'r' : 7.102888,
+        'r_expected' : 9.47864,
+        'Width (GeV)' : [('psit/psit~', 3.1138e-10), ('~sdm', 'stable')],
+        'nll' : 93.98344,
+        'nll_min' : 5.771604,
+        'nll_SM' : 6.20906
+    },
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 79040.55,
+        'upper limit (fb)' : 13846.0,
+        'expected upper limit (fb)' : None,
+        'TxNames' : ['T2bbffff'],
+        'FinalStates' : ['PV > (b,jet,jet,MET),(b,nu,l,MET)'],
+        'Mass (GeV)' : [
+            ('psit', 250.0),
+            ('psit~', 250.0),
+            ('~sdm', 210.0)
+        ],
+        'AnalysisID' : 'ATLAS-SUSY-2016-16',
+        'DataSetID' : None,
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 36.1,
+        'dataType' : 'upperLimit',
+        'r' : 5.708548,
+        'r_expected' : None,
+        'Width (GeV)' : [
+            ('psit', 3.113849e-10),
+            ('psit~', 3.113849e-10),
+            ('~sdm', 'stable')
+        ]
+    }
+],
+'Total xsec for missing topologies (fb)' : 0.0,
+'missing topologies' : [],
+'Total xsec for missing topologies with displaced decays (fb)' : 0.0,
+'missing topologies with displaced decays' : [],
+'Total xsec for missing topologies with prompt decays (fb)' : 0.0,
+'missing topologies with prompt decays' : [],
+'Total xsec for topologies outside the grid (fb)' : 0.0,
+'topologies outside the grid' : []
+}

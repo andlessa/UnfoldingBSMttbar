@@ -1,0 +1,6 @@
+*.pyc
+*.pkl
+*.hepmc
+*.hepmc.*
+*.gz
+*.root

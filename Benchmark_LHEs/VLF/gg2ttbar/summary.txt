@@ -1,0 +1,11 @@
+
+   --------------------------------------------------------------
+      Final results and run summary:
+      Process g g > t t~ QCD^2<=4 NP1^2<=4 QED^2<=0 NP2^2<=0 NP3^2<=0 [QCD \
+      Run at p-p collider (6500.0 + 6500.0 GeV)
+      Total cross section, incl. bias (DO NOT USE): 7.955e-06 +- 1.7e-08 pb
+   --------------------------------------------------------------
+      Scale variation (computed from histogram information):
+          Dynamical_scale_choice -1 (envelope of 9 values): 
+              8.397e-03 pb  +30.9% -23.1%
+   --------------------------------------------------------------

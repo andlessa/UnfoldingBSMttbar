@@ -1,0 +1,58 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../../processFolders/Zp_0p99w_SLHAs/zprime_w0p99_m2300_x0043_topDom.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/z_prime/pp2zprime/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ ATLAS-EXOT-2018-48  1.30E+01    0.0  4.482E+01  1.196E+01  3.748E+00  3.657E+00
+ Signal Region:  (UL)
+ Txnames:  TRV1tt
+ Final States: PV > (t,t)
+--------------------------------------------------------------------------------
+     CMS-EXO-19-012  1.30E+01    0.0  8.635E+00  2.994E+01  2.884E-01 N/A
+ Signal Region:  (UL)
+ Txnames:  TRV1jj
+ Final States: PV > (jetb,jetb)
+--------------------------------------------------------------------------------
+ ATLAS-EXOT-2019-03  1.30E+01    0.0  8.635E+00  3.770E+01  2.290E-01  2.623E-01
+ Signal Region:  (UL)
+ Txnames:  TRV1jj
+ Final States: PV > (jetb,jetb)
+
+ 
+================================================================================
+The highest r value is = 3.74807 from ATLAS-EXOT-2018-48 (r_expected=3.65735)
+ATLAS analysis with highest available r_expected: ATLAS-EXOT-2018-48, r_expected=3.65735, r_obs=3.74807
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  0.000E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+No topologies outside the grid found
+================================================================================

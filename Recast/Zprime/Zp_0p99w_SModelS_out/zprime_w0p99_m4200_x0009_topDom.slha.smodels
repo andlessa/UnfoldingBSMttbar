@@ -1,0 +1,21 @@
+Input status: 1
+Decomposition output status: -3 #no topology passed cut on production cross section
+# Input File: ../../processFolders/Zp_0p99w_SLHAs/zprime_w0p99_m4200_x0009_topDom.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/z_prime/pp2zprime/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================

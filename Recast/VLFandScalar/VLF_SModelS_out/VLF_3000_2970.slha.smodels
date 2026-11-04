@@ -1,0 +1,43 @@
+Input status: 1
+Decomposition output status: 0 #no matching experimental results
+# Input File: ../processFolders/VLF_Slhas/VLF_3000_2970.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/VLF/pp2psiTpsiTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  0.000E+00
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  3.936E-04
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+No missing topologies with displaced decays found
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+topologies outside the grid with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          1.736E-04    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          1.210E-04    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          5.774E-05    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          2.110E-05    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          2.013E-05    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+================================================================================

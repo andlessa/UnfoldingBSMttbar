@@ -1,0 +1,62 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_850_825.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ ATLAS-SUSY-2018-12  1.30E+01    0.0  1.053E+01  7.142E+01  1.475E-01  1.163E-01
+ Signal Region:  (UL)
+ Txnames:  T2bbffff
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+--------------------------------------------------------------------------------
+     CMS-SUS-19-010  1.30E+01    0.0  1.044E+01  1.093E+02  9.548E-02  1.223E-01
+ Signal Region:  (UL)
+ Txnames:  T2ttC
+ Final States: PV > (b,jet,jet,MET),(b,jet,jet,MET)
+
+ 
+================================================================================
+The highest r value is = 0.14745 from ATLAS-SUSY-2018-12 (r_expected=0.11625)
+CMS analysis with highest available r_expected: CMS-SUS-19-010, r_expected=0.12228, r_obs=0.09548
+ATLAS analysis with highest available r_expected: ATLAS-SUSY-2018-12, r_expected=0.11625, r_obs=0.14745
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  3.999E-05
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  5.683E+00
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+missing topologies with displaced decays with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          3.999E-05    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+topologies outside the grid with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          3.115E+00    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          1.454E+00    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          5.181E-01    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          4.836E-01    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          1.128E-01    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+================================================================================

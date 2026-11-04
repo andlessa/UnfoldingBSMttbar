@@ -1,0 +1,234 @@
+BLOCK SModelS_Settings
+ 0  v3.1.1                    #SModelS version
+ 1  3.1.1                     #database version
+ 2  0.2                       #maximum condition violation
+ 3  1                         #compression (0 off, 1 on)
+ 4  5.                        #minimum mass gap for mass compression [GeV]
+ 5  0.000005                  #sigmacut [fb]
+ 6  1                         #signal region combination (0 off, 1 on)
+ 7  0                         #analyses combination (0 off, 1 on)
+ 8  1e-11                     #prompt width [GeV] 
+ 9  1e-25                     #stable width [GeV] 
+
+BLOCK SModelS_Exclusion
+ 0 0 1                              #output status (-1 not tested, 0 not excluded, 1 excluded)
+ 1 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 1 1 4.296E+00                      #r value
+ 1 2 2.272E+00                      #expected r value
+ 1 3 0.00                           #condition violation
+ 1 4 CMS-SUS-19-006-agg             #analysis
+ 1 5 (combined)                     #signal region 
+ 1 6 2.6536E+02                     #nll
+ 1 7 2.4952E+02                     #nll_min
+ 1 8 2.4952E+02                     #nll_SM
+
+ 2 0 T2ttoff                        #txname (final states = PV > (W-,b,MET),(W+,b,MET))
+ 2 1 2.464E+00                      #r value
+ 2 2 2.710E+00                      #expected r value
+ 2 3 0.00                           #condition violation
+ 2 4 CMS-SUS-20-002                 #analysis
+ 2 5 (UL)                           #signal region 
+ 2 6 N/A                            #nll
+ 2 7 N/A                            #nll_min
+ 2 8 N/A                            #nll_SM
+
+ 3 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 3 1 1.878E+00                      #r value
+ 3 2 2.148E+00                      #expected r value
+ 3 3 0.00                           #condition violation
+ 3 4 CMS-SUS-19-009                 #analysis
+ 3 5 (UL)                           #signal region 
+ 3 6 N/A                            #nll
+ 3 7 N/A                            #nll_min
+ 3 8 N/A                            #nll_SM
+
+ 4 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 4 1 1.871E+00                      #r value
+ 4 2 N/A                            #expected r value
+ 4 3 0.00                           #condition violation
+ 4 4 ATLAS-SUSY-2018-08             #analysis
+ 4 5 (UL)                           #signal region 
+ 4 6 N/A                            #nll
+ 4 7 N/A                            #nll_min
+ 4 8 N/A                            #nll_SM
+
+ 5 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 5 1 1.760E+00                      #r value
+ 5 2 1.094E+00                      #expected r value
+ 5 3 0.00                           #condition violation
+ 5 4 CMS-SUS-19-006                 #analysis
+ 5 5 (UL)                           #signal region 
+ 5 6 N/A                            #nll
+ 5 7 N/A                            #nll_min
+ 5 8 N/A                            #nll_SM
+
+ 6 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 6 1 1.485E+00                      #r value
+ 6 2 8.990E-01                      #expected r value
+ 6 3 0.00                           #condition violation
+ 6 4 CMS-SUS-16-033                 #analysis
+ 6 5 (UL)                           #signal region 
+ 6 6 N/A                            #nll
+ 6 7 N/A                            #nll_min
+ 6 8 N/A                            #nll_SM
+
+ 7 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 7 1 1.158E+00                      #r value
+ 7 2 7.341E-01                      #expected r value
+ 7 3 0.00                           #condition violation
+ 7 4 CMS-SUS-16-033                 #analysis
+ 7 5 SR11_Njet7_Nb1_HT300_MHT300    #signal region 
+ 7 6 1.2655E+01                     #nll
+ 7 7 1.0043E+01                     #nll_min
+ 7 8 1.0043E+01                     #nll_SM
+
+ 8 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 8 1 1.062E+00                      #r value
+ 8 2 9.895E-01                      #expected r value
+ 8 3 0.00                           #condition violation
+ 8 4 ATLAS-SUSY-2018-12             #analysis
+ 8 5 (UL)                           #signal region 
+ 8 6 N/A                            #nll
+ 8 7 N/A                            #nll_min
+ 8 8 N/A                            #nll_SM
+
+ 9 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 9 1 1.019E+00                      #r value
+ 9 2 1.201E+00                      #expected r value
+ 9 3 0.00                           #condition violation
+ 9 4 CMS-SUS-19-010                 #analysis
+ 9 5 (UL)                           #signal region 
+ 9 6 N/A                            #nll
+ 9 7 N/A                            #nll_min
+ 9 8 N/A                            #nll_SM
+
+ 10 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 10 1 9.258E-01                      #r value
+ 10 2 5.924E-01                      #expected r value
+ 10 3 0.00                           #condition violation
+ 10 4 CMS-SUS-16-036                 #analysis
+ 10 5 (UL)                           #signal region 
+ 10 6 N/A                            #nll
+ 10 7 N/A                            #nll_min
+ 10 8 N/A                            #nll_SM
+
+ 11 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 11 1 7.067E-01                      #r value
+ 11 2 5.910E-01                      #expected r value
+ 11 3 0.00                           #condition violation
+ 11 4 CMS-SUS-16-051                 #analysis
+ 11 5 (UL)                           #signal region 
+ 11 6 N/A                            #nll
+ 11 7 N/A                            #nll_min
+ 11 8 N/A                            #nll_SM
+
+ 12 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 12 1 6.087E-01                      #r value
+ 12 2 6.043E-01                      #expected r value
+ 12 3 0.00                           #condition violation
+ 12 4 CMS-SUS-17-010                 #analysis
+ 12 5 (UL)                           #signal region 
+ 12 6 N/A                            #nll
+ 12 7 N/A                            #nll_min
+ 12 8 N/A                            #nll_SM
+
+ 13 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 13 1 6.075E-01                      #r value
+ 13 2 7.159E-01                      #expected r value
+ 13 3 0.00                           #condition violation
+ 13 4 ATLAS-SUSY-2018-08             #analysis
+ 13 5 SRSFW                          #signal region 
+ 13 6 3.3696E+00                     #nll
+ 13 7 2.6592E+00                     #nll_min
+ 13 8 2.7510E+00                     #nll_SM
+
+ 14 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 14 1 5.598E-01                      #r value
+ 14 2 9.336E-01                      #expected r value
+ 14 3 0.00                           #condition violation
+ 14 4 ATLAS-SUSY-2018-12             #analysis
+ 14 5 SRC5                           #signal region 
+ 14 6 2.6985E+00                     #nll
+ 14 7 2.1951E+00                     #nll_min
+ 14 8 2.5071E+00                     #nll_SM
+
+ 15 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 15 1 5.567E-01                      #r value
+ 15 2 N/A                            #expected r value
+ 15 3 0.00                           #condition violation
+ 15 4 ATLAS-SUSY-2016-17             #analysis
+ 15 5 (UL)                           #signal region 
+ 15 6 N/A                            #nll
+ 15 7 N/A                            #nll_min
+ 15 8 N/A                            #nll_SM
+
+ 16 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 16 1 5.509E-01                      #r value
+ 16 2 5.172E-01                      #expected r value
+ 16 3 0.00                           #condition violation
+ 16 4 ATLAS-SUSY-2016-16             #analysis
+ 16 5 bWN                            #signal region 
+ 16 6 7.3378E+00                     #nll
+ 16 7 6.7353E+00                     #nll_min
+ 16 8 6.7353E+00                     #nll_SM
+
+ 17 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 17 1 5.414E-01                      #r value
+ 17 2 N/A                            #expected r value
+ 17 3 0.00                           #condition violation
+ 17 4 ATLAS-SUSY-2016-16             #analysis
+ 17 5 (UL)                           #signal region 
+ 17 6 N/A                            #nll
+ 17 7 N/A                            #nll_min
+ 17 8 N/A                            #nll_SM
+
+ 18 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 18 1 2.967E-01                      #r value
+ 18 2 3.426E-01                      #expected r value
+ 18 3 0.00                           #condition violation
+ 18 4 CMS-SUS-19-011                 #analysis
+ 18 5 (UL)                           #signal region 
+ 18 6 N/A                            #nll
+ 18 7 N/A                            #nll_min
+ 18 8 N/A                            #nll_SM
+
+ 19 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 19 1 2.508E-01                      #r value
+ 19 2 3.863E-01                      #expected r value
+ 19 3 0.00                           #condition violation
+ 19 4 CMS-SUS-16-050                 #analysis
+ 19 5 (UL)                           #signal region 
+ 19 6 N/A                            #nll
+ 19 7 N/A                            #nll_min
+ 19 8 N/A                            #nll_SM
+
+ 20 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 20 1 2.139E-01                      #r value
+ 20 2 2.498E-01                      #expected r value
+ 20 3 0.00                           #condition violation
+ 20 4 CMS-SUS-16-009                 #analysis
+ 20 5 (UL)                           #signal region 
+ 20 6 N/A                            #nll
+ 20 7 N/A                            #nll_min
+ 20 8 N/A                            #nll_SM
+
+ 21 0 T2ttoff                        #txname (final states = PV > (W,b,MET),(W,b,MET))
+ 21 1 6.626E-02                      #r value
+ 21 2 N/A                            #expected r value
+ 21 3 0.00                           #condition violation
+ 21 4 ATLAS-SUSY-2016-15             #analysis
+ 21 5 (UL)                           #signal region 
+ 21 6 N/A                            #nll
+ 21 7 N/A                            #nll_min
+ 21 8 N/A                            #nll_SM
+
+
+BLOCK SModelS_Coverage
+ 0 0 missing (all)                       # missing topologies
+ 0 1 0.000E+00                           # Total cross-section (fb)
+ 1 0 missing (displaced)                 # missing topologies with displaced decays
+ 1 1 0.000E+00                           # Total cross-section (fb)
+ 2 0 missing (prompt)                    # missing topologies with prompt decays
+ 2 1 0.000E+00                           # Total cross-section (fb)
+ 3 0 outsideGrid (all)                   # topologies outside the grid
+ 3 1 0.000E+00                           # Total cross-section (fb)

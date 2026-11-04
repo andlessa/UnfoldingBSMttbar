@@ -1,0 +1,68 @@
+Input status: 1
+Decomposition output status: 1 #decomposition was successful
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_1800_1790.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+#Analysis  Sqrts  Cond_Violation  Theory_Value(fb)  Exp_limit(fb)  r  r_expected
+
+ CMS-PAS-EXO-16-036  1.30E+01    0.0  1.688E-02  2.067E+04  8.164E-07 N/A
+ Signal Region:  (UL)
+ Txnames:  TRHadQM1
+ Final States: PV > (RHadronQ),(RHadronQ)
+
+ 
+================================================================================
+The highest r value is = 0.00000 from CMS-PAS-EXO-16-036 (r_expected not available)
+
+Total cross-section for missing topologies (fb):  3.676E-04
+Total cross-section for missing topologies with displaced decays (fb):  1.688E-02
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  1.651E-02
+
+#Full information on unconstrained cross sections
+================================================================================
+missing topologies with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          2.630E-04    #                       PV > (RHadronQ),(b,jet,jet,MET) 
+ 13.0          8.733E-05    #                          PV > (RHadronQ),(b,nu,l,MET) 
+ 13.0          1.727E-05    #                         PV > (RHadronQ),(b,nu,ta,MET) 
+================================================================================
+missing topologies with displaced decays with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          8.450E-03    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          5.612E-03    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          1.110E-03    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          9.319E-04    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          3.685E-04    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          2.628E-04    #                       PV > (RHadronQ),(b,jet,jet,MET) 
+ 13.0          8.728E-05    #                          PV > (RHadronQ),(b,nu,l,MET) 
+ 13.0          3.644E-05    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+ 13.0          1.726E-05    #                         PV > (RHadronQ),(b,nu,ta,MET) 
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+topologies outside the grid with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          8.450E-03    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          5.612E-03    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          1.110E-03    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          9.319E-04    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          3.685E-04    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          3.644E-05    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+================================================================================

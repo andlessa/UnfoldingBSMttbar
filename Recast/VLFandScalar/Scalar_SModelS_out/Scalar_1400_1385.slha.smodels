@@ -1,0 +1,51 @@
+Input status: 1
+Decomposition output status: 0 #no matching experimental results
+# Input File: ../processFolders/Scalar_SLHAs/Scalar_1400_1385.slha
+# checkinput = True
+# combinesrs = True
+# computestatistics = True
+# docompress = True
+# doinvisible = True
+# experimentalfeatures = False
+# maxcond = 0.2
+# minmassgap = 5.
+# model = /home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat
+# ncpus = -1
+# promptwidth = 1e-11
+# reportallsrs = False
+# sigmacut = 0.000005
+# stablewidth = 1e-25
+# testcoverage = True
+# SModelS version: 3.1.1
+# Database version: 3.1.1
+================================================================================
+
+Total cross-section for missing topologies (fb):  0.000E+00
+Total cross-section for missing topologies with displaced decays (fb):  2.000E-01
+Total cross-section for missing topologies with prompt decays (fb):  0.000E+00
+Total cross-section for topologies outside the grid (fb):  2.007E-01
+
+#Full information on unconstrained cross sections
+================================================================================
+No missing topologies found
+================================================================================
+missing topologies with displaced decays with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          9.395E-02    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          6.258E-02    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          2.368E-02    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          1.042E-02    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          7.887E-03    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          1.492E-03    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+================================================================================
+No missing topologies with prompt decays found
+================================================================================
+topologies outside the grid with the highest cross sections (up to 10):
+Sqrts (TeV)   Weight (fb)                  SMS description
+ 13.0          9.429E-02    #                  PV > (b,jet,jet,MET),(b,jet,jet,MET) 
+ 13.0          6.281E-02    #                     PV > (b,jet,jet,MET),(b,nu,l,MET) 
+ 13.0          2.377E-02    #                    PV > (b,jet,jet,MET),(b,nu,ta,MET) 
+ 13.0          1.046E-02    #                        PV > (b,nu,l,MET),(b,nu,l,MET) 
+ 13.0          7.916E-03    #                       PV > (b,nu,l,MET),(b,nu,ta,MET) 
+ 13.0          1.498E-03    #                      PV > (b,nu,ta,MET),(b,nu,ta,MET) 
+================================================================================

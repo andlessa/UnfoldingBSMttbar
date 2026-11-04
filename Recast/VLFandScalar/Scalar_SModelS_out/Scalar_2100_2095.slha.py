@@ -1,0 +1,52 @@
+smodelsOutput = {
+'OutputStatus' : {
+    'sigmacut' : 5e-06,
+    'minmassgap' : 5.0,
+    'maxcond' : 0.2,
+    'ncpus' : -1,
+    'model' : '/home/vinicius/EFT_ToyModel/processFolders/Scalar/pp2sTsTbar/Cards/param_card.dat',
+    'promptwidth' : 1e-11,
+    'stablewidth' : 1e-25,
+    'checkinput' : True,
+    'doinvisible' : True,
+    'docompress' : True,
+    'computestatistics' : True,
+    'testcoverage' : True,
+    'combinesrs' : True,
+    'reportallsrs' : False,
+    'experimentalfeatures' : False,
+    'file status' : 1,
+    'decomposition status' : 1,
+    'warnings' : 'Input file ok',
+    'input file' : '../processFolders/Scalar_SLHAs/Scalar_2100_2095.slha',
+    'database version' : '3.1.1',
+    'smodels version' : '3.1.1'
+},
+'ExptRes' : [
+    {
+        'maxcond' : 0.0,
+        'theory prediction (fb)' : 0.0028819,
+        'upper limit (fb)' : 3.41927,
+        'expected upper limit (fb)' : None,
+        'TxNames' : ['TRHadQM1'],
+        'FinalStates' : ['PV > (RHadronQ),(RHadronQ)'],
+        'Mass (GeV)' : [('~st~', 2100.0), ('~st', 2100.0)],
+        'AnalysisID' : 'CMS-PAS-EXO-16-036',
+        'DataSetID' : None,
+        'AnalysisSqrts (TeV)' : 13.0,
+        'lumi (fb-1)' : 12.9,
+        'dataType' : 'upperLimit',
+        'r' : 0.0008428407,
+        'r_expected' : None,
+        'Width (GeV)' : [('~st~', 6.30701e-25), ('~st', 6.30701e-25)]
+    }
+],
+'Total xsec for missing topologies (fb)' : 0.0,
+'missing topologies' : [],
+'Total xsec for missing topologies with displaced decays (fb)' : 0.0,
+'missing topologies with displaced decays' : [],
+'Total xsec for missing topologies with prompt decays (fb)' : 0.0,
+'missing topologies with prompt decays' : [],
+'Total xsec for topologies outside the grid (fb)' : 0.0,
+'topologies outside the grid' : []
+}

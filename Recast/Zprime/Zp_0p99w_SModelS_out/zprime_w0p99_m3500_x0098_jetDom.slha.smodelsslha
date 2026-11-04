@@ -1,0 +1,54 @@
+BLOCK SModelS_Settings
+ 0  v3.1.1                    #SModelS version
+ 1  3.1.1                     #database version
+ 2  0.2                       #maximum condition violation
+ 3  1                         #compression (0 off, 1 on)
+ 4  5.                        #minimum mass gap for mass compression [GeV]
+ 5  0.000005                  #sigmacut [fb]
+ 6  1                         #signal region combination (0 off, 1 on)
+ 7  0                         #analyses combination (0 off, 1 on)
+ 8  1e-11                     #prompt width [GeV] 
+ 9  1e-25                     #stable width [GeV] 
+
+BLOCK SModelS_Exclusion
+ 0 0 1                              #output status (-1 not tested, 0 not excluded, 1 excluded)
+ 1 0 TRV1jj                         #txname (final states = PV > (jetb,jetb))
+ 1 1 3.441E+00                      #r value
+ 1 2 N/A                            #expected r value
+ 1 3 0.00                           #condition violation
+ 1 4 ATLAS-EXOT-2019-03             #analysis
+ 1 5 (UL)                           #signal region 
+ 1 6 N/A                            #nll
+ 1 7 N/A                            #nll_min
+ 1 8 N/A                            #nll_SM
+
+ 2 0 TRV1jj                         #txname (final states = PV > (jetb,jetb))
+ 2 1 1.196E+00                      #r value
+ 2 2 N/A                            #expected r value
+ 2 3 0.00                           #condition violation
+ 2 4 CMS-EXO-19-012                 #analysis
+ 2 5 (UL)                           #signal region 
+ 2 6 N/A                            #nll
+ 2 7 N/A                            #nll_min
+ 2 8 N/A                            #nll_SM
+
+ 3 0 TRV1tt                         #txname (final states = PV > (t,t))
+ 3 1 4.208E-04                      #r value
+ 3 2 5.407E-04                      #expected r value
+ 3 3 0.00                           #condition violation
+ 3 4 ATLAS-EXOT-2018-48             #analysis
+ 3 5 (UL)                           #signal region 
+ 3 6 N/A                            #nll
+ 3 7 N/A                            #nll_min
+ 3 8 N/A                            #nll_SM
+
+
+BLOCK SModelS_Coverage
+ 0 0 missing (all)                       # missing topologies
+ 0 1 0.000E+00                           # Total cross-section (fb)
+ 1 0 missing (displaced)                 # missing topologies with displaced decays
+ 1 1 0.000E+00                           # Total cross-section (fb)
+ 2 0 missing (prompt)                    # missing topologies with prompt decays
+ 2 1 0.000E+00                           # Total cross-section (fb)
+ 3 0 outsideGrid (all)                   # topologies outside the grid
+ 3 1 0.000E+00                           # Total cross-section (fb)
