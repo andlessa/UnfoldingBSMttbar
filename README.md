@@ -3,11 +3,6 @@
 Code, model files and data for the paper:
 
 > **Testing the Spin of New Physics with Top Precision Measurements**
->
-> André Lessa<sup>a</sup>, Vinícius Rocca<sup>a</sup> and Veronica Sanz<sup>b</sup>
->
-> <sup>a</sup> Instituto de Física, Universidade de São Paulo, São Paulo, 05508-090 SP, Brazil<br>
-> <sup>b</sup> Instituto de Física Corpuscular (IFIC), Universidad de Valencia-CSIC, E-46980 Valencia, Spain
 
 ## Authors
 
