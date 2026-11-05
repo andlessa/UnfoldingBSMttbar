@@ -20,7 +20,7 @@ The generated models go to [../UFO_Models](../UFO_Models) and [../FA_models](../
 | [Scalar_ttGTriangle-loop.nb](./FormFactors/Scalar_ttGTriangle-loop.nb) | One-loop $t\bar{t}g$ vertex (triangle diagrams) in the Scalar model. |
 | [VLF_ttGTriangle-loop.nb](./FormFactors/VLF_ttGTriangle-loop.nb) | Same for the VLF model. |
 
-The diagrams are generated with FeynArts from the FA models. The amplitudes are reduced with FeynCalc, and the loop integrals are evaluated analytically with Package-X through FeynHelpers (`PaXEvaluate`). The resulting form factors are used in [../Plots/FormFactor_shape_new.ipynb](../Plots/FormFactor_shape_new.ipynb).
+The diagrams are generated with FeynArts from the FA models. The amplitudes are reduced with FeynCalc, and the loop integrals are evaluated analytically with Package-X through FeynHelpers (`PaXEvaluate`). The resulting form factors are used in [../Plots/FormFactor_shape.ipynb](../Plots/FormFactor_shape.ipynb).
 
 ## Requirements
 

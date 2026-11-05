@@ -78,4 +78,4 @@ runSModelS.py -p smodels_parameters.ini -f ./Scalar/Scalar_SLHAs/ -o ./Scalar/Sc
    ```
    Change the output name for the other models (`./VLF/VLF_smodels.pcl`, ...).
 
-The `.pcl` files are read by the exclusion notebooks in [../Plots](../Plots) (`plotExclusion-SModelS-*_new.ipynb`). A point is excluded if `ExptRes.result0.r > 1`.
+The `.pcl` files are read by the exclusion notebooks in [../Plots](../Plots) (`plotExclusion-SModelS-*.ipynb`). A point is excluded if `ExptRes.result0.r > 1`.
