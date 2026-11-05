@@ -48,7 +48,6 @@ These results show how precision differential measurements can probe the spin an
 * [UFO_Models](UFO_Models): UFO models used by MadGraph.
 * [Cards](Cards): MadGraph, Pythia8 and Delphes cards for each model.
 * [Scan_scripts](Scan_scripts): scripts and `.ini` files for running MadGraph parameter scans (locally or on HTCondor).
-* [Benchmark_LHEs](Benchmark_LHEs): LHE files for the SM and benchmark points of each model.
 * [Recast](Recast): SModelS inputs, outputs and exclusion limits.
 * [Plots](Plots): notebooks and helper functions (`helpers.py`) that make the differential distributions, form-factor shapes, Asimov-significance and exclusion plots.
 * [installer.sh](installer.sh) / [setenv.sh](setenv.sh): installation of the external tools and environment setup.
