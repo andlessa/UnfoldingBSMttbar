@@ -12,7 +12,5 @@ MadGraph, Pythia8 and Delphes cards used to generate the events for each model.
 | [z_prime/LO](./z_prime/LO), [z_prime/NLO](./z_prime/NLO) | $Z^\prime$ model at LO and NLO. |
 | `*/Benchmark_banners` | MadGraph run banners of the benchmark points, i.e. the exact cards used for each benchmark. |
 | `mtt_bias*.f` | Fortran bias modules that enhance event generation at high $m_{t\bar{t}}$ so the tails are well populated. Events are reweighted, so the distributions are unbiased. |
-| [pythia8_card.dat](./pythia8_card.dat) | Pythia8 parton-shower settings. |
-| [delphes_card.dat](./delphes_card.dat) | Delphes detector-simulation card. |
 
 For the NLO runs, the bias function is passed to MadGraph through the `custom_fcts` option of the run card (e.g. `../Source/mtt_bias_NLO.f = custom_fcts`).

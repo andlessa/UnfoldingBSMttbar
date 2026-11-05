@@ -4,3 +4,4 @@
 *.hepmc.*
 *.gz
 *.root
+*ipynb_checkpoints
