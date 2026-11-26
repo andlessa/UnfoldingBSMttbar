@@ -1,0 +1,6 @@
+set automatic_html_opening False --no_save
+import model sm
+define p = g u c d s u~ c~ d~ s~
+import model /home/vinicius/MG5/models/UV_BSM_ToyModel_NLO-UFO
+generate p p > t t~ QCD^2<=4 NP1^2<=4 QED^2<=0 NP2^2<=0 NP3^2<=0 [virt=NP1]
+output /home/vinicius/UnfoldingBSMttbar/processFolders/VLF/MatrixElements

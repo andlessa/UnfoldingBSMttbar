@@ -117,8 +117,18 @@ class ParamCardWriter(object):
     def write_dep_param_block(self, lhablock):
         import cmath
         from parameters import all_parameters
+        from function_library import complexconjugate
+        # Python >= 3.13 (PEP 667): exec() in a function no longer writes to the
+        # function's locals, so evaluate all parameters in an explicit namespace.
+        ns = {'cmath': cmath}
+        try:
+            import function_library
+            ns.update({k: v for k, v in vars(function_library).items()
+                       if not k.startswith('__')})
+        except ImportError:
+            pass
         for parameter in all_parameters:
-            exec("%s = %s" % (parameter.name, parameter.value))
+            exec("%s = %s" % (parameter.name, parameter.value), ns)
         text = "##  Not dependent paramater.\n"
         text += "## Those values should be edited following analytical the \n"
         text += "## analytical expression. Some generator could simply ignore \n"
@@ -132,7 +142,7 @@ class ParamCardWriter(object):
             prefix = "DECAY "
         for part, param in data:
             if isinstance(param.value, str):
-                value = complex(eval(param.value)).real
+                value = complex(eval(param.value, ns)).real
             else:
                 value = param.value
             

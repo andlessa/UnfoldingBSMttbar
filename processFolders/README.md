@@ -4,11 +4,54 @@ MadGraph5_aMC@NLO process folders for every model of the analysis.
 
 | folder | content |
 |---|---|
-| `sm/`, `Scalar/`, `VLF/`, `z_prime/` | event-generation folders (`pp2ttbar*`) and the cards used to produce the samples |
+| `sm/pp2ttbar_gs4` | SM sample used by the analysis (section 0) |
+| `Scalar/`, `VLF/`, `z_prime/` | event-generation folders (`pp2ttbar*`) and the cards used to produce the signal samples |
 | `Scalar/MatrixElements` | MadLoop library: one-loop Scalar interference, used by the MEM |
 | `VLF/MatrixElements` | MadLoop library: one-loop VLF interference, used by the MEM |
 | `z_prime/MatrixElements/Zprime_{A,B}` | tree-level Z' libraries, used by the MEM |
 | `build_matrix_elements.py` | generates and compiles the three `MatrixElements` folders |
+
+## 0. Generating the SM sample
+
+The SM sample of the analysis is an aMC@NLO fixed-order run of the **Scalar UFO with the new-physics
+coupling switched off**. Only the $g_s^4$ (pure QCD Born) contribution is selected, and the events are
+generated with an $m_{t\bar t}$ bias. Everything needed is in `sm/`:
+
+| file | role |
+|---|---|
+| `sm/pp2ttbar_gs4.mg5` | MG5 commands that create the folder (`generate p p > t t~ [QCD NP]`, UFO `../../UFO_Models/SMS-stop_NLO-UFO`) |
+| `sm/pp2ttbar_gs4/Cards/param_card.dat` | `ydm = 0`; `mst = 1500`, used only by the bias function |
+| `sm/pp2ttbar_gs4/Cards/FKS_params.dat` | `#SelectedCouplingOrders` = `0 4 0`, so only $g_s^4$. The columns follow `SubProcesses/P*/orders.inc`, here `NP, QCD, QED` |
+| `sm/pp2ttbar_gs4/Cards/run_card.dat` | 13.6 TeV, LHAPDF 244800, $\mu = H_T/2$ (`dynamical_scale_choice = -1`), `req_acc_FO = 0.0009`, top $p_T \in [0.5, 3.5]$ TeV (`pt_min_pdg`, `pt_max_pdg`), `event_norm = bias`, `custom_fcts = ../Source/mtt_bias_NLO.f` |
+| `sm/pp2ttbar_gs4/Cards/FO_analyse_card.dat` | `FO_ANALYSIS_FORMAT = LHE`: the fixed-order run writes weighted events |
+| `sm/pp2ttbar_gs4/Source/mtt_bias_NLO.f` | the $m_{t\bar t}$ bias, peaked at $2.05\,m_{st}$ |
+
+Requirements: MG5_aMC v3.6.3 **with the bias patch** (`../mg5_bias_patch/README.md`). Without it, the
+weights of each channel are normalised to the biased cross section.
+
+```bash
+cd processFolders/sm
+cp -r pp2ttbar_gs4/Cards pp2ttbar_gs4/Source /tmp/sm_cards       # keep the tracked cards
+rm -rf pp2ttbar_gs4                                              # only if the folder must be recreated
+<MG5>/bin/mg5_aMC pp2ttbar_gs4.mg5                               # creates pp2ttbar_gs4 (default cards)
+cp /tmp/sm_cards/Cards/*.dat pp2ttbar_gs4/Cards/
+cp /tmp/sm_cards/Source/mtt_bias_NLO.f pp2ttbar_gs4/Source/
+cd pp2ttbar_gs4/bin
+printf "order=NLO\nfixed_order=ON\nshower=OFF\ndone\ndone\n" | ./generate_events -n bias_sm_13_6TeV_fiducial_pT
+```
+
+The run takes about 10 minutes on 16 cores and writes
+`Events/bias_sm_13_6TeV_fiducial_pT/events.lhe.gz` (about 2.4M weighted events), which is the input
+of `../scripts/prepare_events.py` (`SM_RUN` in `../mem/config.py`). The summary should read
+`Total cross section, bias removed: 1.424e+00 pb` (the line is added by the bias patch). A new run is
+statistically equivalent to the original, not identical, because the events come from MINT's
+random sampling.
+
+The same recipe gives the Scalar signal (SM + interference) sample with `ydm = 7.5` and two selected
+lines in `#SelectedCouplingOrders`, `2 4 0` (Born x one-loop NP interference) and `0 4 0` (SM Born). **Check the column order in `orders.inc` for every
+UFO:** for the VLF it is `NP2, NP1, NP3, QCD, QED`, so its interference is `0 2 0 4 0`.
+
+---
 
 The rest of this file is about the `MatrixElements` folders: how to generate them, and how the
 MEM pipeline (`../mem`, `../scripts`) uses them to compute the matrix elements of each event.

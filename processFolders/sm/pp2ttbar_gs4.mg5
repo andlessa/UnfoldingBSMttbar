@@ -1,0 +1,7 @@
+set automatic_html_opening False --no_save
+import model sm
+define p = g u c d s u~ c~ d~ s~
+define j = g u c d s u~ c~ d~ s~
+import model ../../UFO_Models/SMS-stop_NLO-UFO
+generate p p > t t~ [QCD NP]
+output pp2ttbar_gs4

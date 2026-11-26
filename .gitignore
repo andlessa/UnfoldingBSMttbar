@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+# MadGraph model cache written into UFO folders
+*.pkl
 
 # ---------------------------------------------------------------- generated data
 /data/
@@ -25,6 +27,8 @@ __pycache__/
 !/processFolders/**/Cards/param_card.dat
 !/processFolders/**/Cards/run_card.dat
 !/processFolders/**/Cards/FKS_params.dat
+!/processFolders/**/Cards/FO_analyse_card.dat
+!/processFolders/**/*.mg5
 !/processFolders/**/Source/mtt_bias_NLO.f
 !/processFolders/**/Source/BIAS/mtt_bias/mtt_bias.f
 !/processFolders/**/Source/BIAS/mtt_bias/makefile

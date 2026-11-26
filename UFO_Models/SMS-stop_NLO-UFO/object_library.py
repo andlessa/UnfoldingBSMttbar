@@ -312,10 +312,12 @@ class Function(object):
     
     def __call__(self, *opt):
 
-        for i, arg in enumerate(self.arguments):
-            exec('%s = %s' % (arg, opt[i] ))
-
-        return eval(self.expr)
+        # Python >= 3.13 (PEP 667): exec() no longer writes to function locals,
+        # so pass the arguments to eval() explicitly.
+        import cmath
+        local_ns = {'cmath': cmath}
+        local_ns.update(zip(self.arguments, opt))
+        return eval(self.expr, globals(), local_ns)
 
 all_orders = []
 
