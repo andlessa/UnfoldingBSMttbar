@@ -63,13 +63,13 @@
 #***********************************************************************
  1   = lpp1    ! beam 1 type (0 = no PDF)
  1   = lpp2    ! beam 2 type (0 = no PDF)
- 6500.0   = ebeam1  ! beam 1 energy in GeV
- 6500.0   = ebeam2  ! beam 2 energy in GeV
+ 6800.0   = ebeam1  ! beam 1 energy in GeV
+ 6800.0   = ebeam2  ! beam 2 energy in GeV
 #***********************************************************************
 # PDF choice: this automatically fixes also alpha_s(MZ) and its evol.  *
 #***********************************************************************
- nn23nlo = pdlabel ! PDF set
- 244600  = lhaid   ! If pdlabel=lhapdf, this is the lhapdf number. Only 
+ lhapdf = pdlabel ! PDF set
+ 244800  = lhaid   ! If pdlabel=lhapdf, this is the lhapdf number. Only 
               ! numbers for central PDF sets are allowed. Can be a list; 
               ! PDF sets beyond the first are included via reweighting.
   0	= pdfscheme ! the scheme of the input PDFs. 0->MSbar; 1->DIS
@@ -198,8 +198,8 @@
 # POSITIVE PDG CODES only. Example of the syntax is {6 : 100} or       *
 # {6:100, 25:200} for multiple particles                               *
 #***********************************************************************
-  {} = pt_min_pdg ! Min pT for a massive particle
-  {} = pt_max_pdg ! Max pT for a massive particle
+  {6:500} = pt_min_pdg ! Min pT for a massive particle
+  {6:3500} = pt_max_pdg ! Max pT for a massive particle
   {} = mxx_min_pdg ! inv. mass for any pair of (anti)particles
 #***********************************************************************
 # Use PineAPPL to generate PDF-independent fast-interpolation grid     *

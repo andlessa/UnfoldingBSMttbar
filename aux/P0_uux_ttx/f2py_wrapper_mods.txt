@@ -1,0 +1,250 @@
+================================================================================
+MADLOOP FORTRAN WRAPPER MODIFICATIONS: EXTRACTING FULL MATRIX ELEMENTS
+================================================================================
+Description: These changes modify the Fortran wrapper to output the Born term, 
+finite 1-loop correction, single pole, and double pole components as an array 
+of size 4, rather than returning just a scalar finite part.
+
+--------------------------------------------------------------------------------
+1. Change ANS from a scalar to an array of size 4
+--------------------------------------------------------------------------------
+Find:
+      DOUBLE PRECISION ANS
+
+Change to:
+      DOUBLE PRECISION ANS(4)
+
+
+--------------------------------------------------------------------------------
+2. Update the CF2PY INTENT declaration
+--------------------------------------------------------------------------------
+Find:
+      !f2py intent(out) :: ans
+
+Change to:
+      !f2py intent(out) :: ans(4)
+
+
+--------------------------------------------------------------------------------
+3. Expand the Buffer Array to 2D
+--------------------------------------------------------------------------------
+Description: Because ANS is now an array, the caching buffer needs to store 
+4 values per position instead of 1.
+
+Find:
+      DOUBLE PRECISION OLD_ME(BUFFER_SIZE)
+
+Change to:
+      DOUBLE PRECISION OLD_ME(4, BUFFER_SIZE)
+
+
+--------------------------------------------------------------------------------
+4. Update Buffer Retrieval and Storage
+--------------------------------------------------------------------------------
+Find where the buffer is read (around line 69):
+              ANS = OLD_ME(I)
+
+Change to:
+              ANS(:) = OLD_ME(:,I)
+
+Find where the buffer is saved at the very bottom (around line 117):
+      OLD_ME(BUFFER_POSITION) = ANS
+
+Change to:
+      OLD_ME(:, BUFFER_POSITION) = ANS(:)
+
+
+--------------------------------------------------------------------------------
+5. Map All 4 Matrix Element Components
+--------------------------------------------------------------------------------
+Find the assignment block around line 111:
+C     loop induce -> only finite part 
+      ANS =  MATELEM(1,0)
+
+Replace that entire block with this:
+C     Export Full Matrix Element Array to Python
+      ANS(1) = MATELEM(0,0) ! Born (|M0|^2)
+      ANS(2) = MATELEM(1,0) ! Finite 1-loop
+      ANS(3) = MATELEM(2,0) ! Single Pole (1/eps)
+      ANS(4) = MATELEM(3,0) ! Double Pole (1/eps^2)
+================================================================================
+
+
+
+
+
+
+================================================================================
+MADLOOP FORTRAN WRAPPER MODIFICATIONS: ARBITRARY SPLIT ORDERS
+================================================================================
+Description: When introducing new physics (NP) or Effective Field Theory (EFT) 
+couplings, MadGraph splits the calculation into multiple coupling orders 
+(e.g., pure QCD, pure EW, interference, pure BSM). 
+
+These instructions upgrade the default Fortran wrapper to export the full 
+Matrix Element (Born, Finite, 1/eps, 1/eps^2) across ALL split orders as a 
+2D array of shape (4, 0:N), where N is the total number of split orders.
+
+--------------------------------------------------------------------------------
+STEP 0: Identify the Number of Split Orders (N)
+--------------------------------------------------------------------------------
+Run your `./check` executable or look at the terminal output. MadLoop will list 
+the split orders at the end of the initialization (e.g., "1L) 2L) ... 6L)"). 
+The highest number printed is your 'N'. 
+
+Alternatively, look inside the generated `sloopmatrix.f` or `matrix.f` file 
+for the parameter `NSQAMPSO`. That integer is your N.
+
+For the instructions below, replace 'N' with your specific integer (e.g., 6).
+
+--------------------------------------------------------------------------------
+1. Upgrade ANS to a 2D Array
+--------------------------------------------------------------------------------
+Find:
+      DOUBLE PRECISION ANS
+
+Change to:
+      DOUBLE PRECISION ANS(4, 0:N)
+
+
+--------------------------------------------------------------------------------
+2. Update the CF2PY INTENT declaration
+--------------------------------------------------------------------------------
+Find:
+      !f2py intent(out) :: ans
+   (or)
+      CF2PY INTENT(OUT) :: ANS
+
+Change to:
+      !f2py intent(out) :: ans(4, 0:N)
+   (or)
+      CF2PY INTENT(OUT) :: ANS(4, 0:N)
+
+
+--------------------------------------------------------------------------------
+3. Expand the Caching Buffer Array to 3D
+--------------------------------------------------------------------------------
+Description: The buffer prevents MadLoop from re-evaluating the same phase-space 
+point. It must be expanded to cache 4 components for 0 to N orders.
+
+Find:
+      DOUBLE PRECISION OLD_ME(BUFFER_SIZE)
+
+Change to:
+      DOUBLE PRECISION OLD_ME(4, 0:N, BUFFER_SIZE)
+
+
+--------------------------------------------------------------------------------
+4. Update Buffer Retrieval and Storage
+--------------------------------------------------------------------------------
+Find where the buffer is read (around line 69):
+              ANS = OLD_ME(I)
+
+Change to:
+              ANS(:,:) = OLD_ME(:,:,I)
+
+Find where the buffer is saved at the very bottom (around line 117):
+      OLD_ME(BUFFER_POSITION) = ANS
+
+Change to:
+      OLD_ME(:,:, BUFFER_POSITION) = ANS(:,:)
+
+
+--------------------------------------------------------------------------------
+5. Map All Matrix Element Components via DO Loop
+--------------------------------------------------------------------------------
+Description: We map the internal MATELEM array to our output array. Index 0 
+is the total sum (defined by MG5 generation syntax), and indices 1 through N 
+are the individual squared split orders.
+
+Find the assignment block around line 111:
+C     loop induce -> only finite part 
+      ANS =  MATELEM(1,0)
+
+Replace that entire block with this:
+      INTEGER K_ORD
+C     Export Full Matrix Element Array (Total Sum + N Split Orders)
+      DO K_ORD = 0, N
+          ANS(1, K_ORD) = MATELEM(0, K_ORD) ! Born (|M0|^2)
+          ANS(2, K_ORD) = MATELEM(1, K_ORD) ! Finite 1-loop
+          ANS(3, K_ORD) = MATELEM(2, K_ORD) ! Single Pole (1/eps)
+          ANS(4, K_ORD) = MATELEM(3, K_ORD) ! Double Pole (1/eps^2)
+      END DO
+================================================================================
+
+
+
+
+
+========================================================================
+F2PY WRAPPER PATCH DOCUMENTATION: MATRIX ELEMENT SPLIT ORDERS
+========================================================================
+
+1. PURPOSE OF THE PATCH
+------------------------------------------------------------------------
+By default, the F2PY wrappers generated by MadGraph provide a single 
+aggregated matrix element value for a given phase space point. However, 
+different subprocesses involve different combinations of coupling orders 
+(e.g., pure QCD vs. QCD/Electroweak interference). 
+
+This patch modifies the f2py_wrapper.f files across all subprocesses 
+to extract the individual squared split orders dynamically. Instead of 
+returning a scalar or a fixed array, the wrappers are modified to return 
+an array of size (0:N), where 0 is the total sum and 1 through N are 
+the specific split order contributions.
+
+
+2. THE CORE LOGIC
+------------------------------------------------------------------------
+The underlying logic is identical across all subprocess channels. The 
+only variable that changes from folder to folder is "N" (the number of 
+squared split orders, mapped to NSQAMPSO in the Fortran headers).
+
+* g g > t t~: Pure QCD. Only 1 Born configuration exists. (N = 1)
+* d d~ > t t~: Contains QCD and QED/EW interactions. Leads to 6 
+  interference terms. (N = 6)
+
+To handle this generically, the wrapper code replaces hardcoded scalar 
+assignments with a DO loop that iterates from 0 to N. Additionally, the 
+buffer arrays used to cache phase space points are resized to match 
+this (0:N) dimension.
+
+
+3. GENERIC CODE CHANGES APPLIED
+------------------------------------------------------------------------
+For any given subprocess wrapper (f2py_wrapper.f), where N is the 
+number of split orders defined for that specific process, the following 
+universal changes are applied:
+
+A. Array Bounds and F2PY Directives
+The output array ANS and its corresponding F2PY intent directive are 
+updated to accommodate the split orders.
+* Old: DOUBLE PRECISION ANS (or ANS(0:3))
+* New: DOUBLE PRECISION ANS(0:N) 
+  (where N is dynamically replaced by the specific subprocess integer)
+
+B. Memory Buffering Dimensions
+The caching arrays that prevent re-evaluating identical phase space 
+points are resized.
+* Old: DOUBLE PRECISION OLD_ME(..., BUFFER_SIZE)
+* New: DOUBLE PRECISION OLD_ME(0:N, BUFFER_SIZE)
+* Assignment Fix: ANS(:) = OLD_ME(:,I) 
+                  OLD_ME(:,BUFFER_POSITION) = ANS(:)
+
+C. Matrix Element Extraction Loop
+The static assignments for the matrix element are replaced with a 
+dynamic loop that sweeps through the zeroth index (the sum) up to N.
+
+      C Export Born Matrix Element Array (Total Sum + N Split Orders)
+      DO K_ORD = 0, N
+          ANS(K_ORD) = MATELEM(0, K_ORD) 
+      END DO
+
+
+4. SUMMARY OF SUBPROCESS CONFIGURATIONS
+------------------------------------------------------------------------
+Subprocess Initial State    Coupling Types      Split Orders (N)   Bounds
+------------------------------------------------------------------------
+g g (Gluon-Gluon)           Pure QCD            1                  0:1
+q q~ (Quark-Antiquark)      QCD + QED/EW        6                  0:6
+========================================================================

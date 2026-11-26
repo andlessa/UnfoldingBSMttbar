@@ -1,0 +1,267 @@
+--- a/Template/NLO/SubProcesses/fks_singular.f
++++ b/Template/NLO/SubProcesses/fks_singular.f
+@@ -2953,6 +2953,9 @@
+       use weight_lines
+       use extra_weights
+       implicit none
++c PATCH (bias normalisation of FO LHE events)
++      double precision cur_bias_wgt
++      common /c_fo_lhe_bias/cur_bias_wgt
+       include 'nexternal.inc'
+       include 'timing_variables.inc'
+       include 'fks_info.inc'
+@@ -3043,6 +3046,8 @@
+ c call the analysis/histogramming routines
+             orders_tag_plot=orderstag(i)
+             amp_pos_plot=amppos(i)
++c PATCH (bias normalisation of FO LHE events): bias weight of this point
++            cur_bias_wgt=bias_wgt(i)
+             call outfun(momenta(0,1,i),y_bst(i),www,pdg(1,i),plot_id(i))
+          endif
+       enddo
+--- a/Template/NLO/SubProcesses/analysis_lhe.f
++++ b/Template/NLO/SubProcesses/analysis_lhe.f
+@@ -9,11 +9,13 @@
+       character*(*) weights_info(*)
+       logical passed_unwgt
+       integer nwgts,nevents
+-      double precision sum_of_wgts
+-      common/to_lhe_analysis/sum_of_wgts,nwgts,nevents,passed_unwgt
++      double precision sum_of_wgts,sum_of_bwgts
++      common/to_lhe_analysis/sum_of_wgts,sum_of_bwgts,nwgts,nevents,
++     &     passed_unwgt
+       logical lopen
+       nwgts=nwgt
+       sum_of_wgts=0d0
++      sum_of_bwgts=0d0
+       nevents=0
+       inquire(41,OPENED=lopen) ! in case run is reset due to 2 bad iterations...
+       if (lopen) close(41)
+@@ -26,8 +28,9 @@
+       double precision xnorm
+       logical passed_unwgt
+       integer nwgts,nevents
+-      double precision sum_of_wgts
+-      common/to_lhe_analysis/sum_of_wgts,nwgts,nevents,passed_unwgt
++      double precision sum_of_wgts,sum_of_bwgts
++      common/to_lhe_analysis/sum_of_wgts,sum_of_bwgts,nwgts,nevents,
++     &     passed_unwgt
+       logical lopen
+       integer                                   npoints
+       double precision            cross_section
+@@ -36,7 +39,9 @@
+       inquire(41,OPENED=lopen)  ! safety
+       if (lopen) then
+          backspace(41)          ! overwrite the final </eventgroup> tag
+-         write (41,*) nevents,sum_of_wgts,cross_section
++c PATCH: 4th number = sum of (weight * bias weight), used to normalise the
++c events to the unbiased cross section (cross_section is the biased one)
++         write (41,*) nevents,sum_of_wgts,cross_section,sum_of_bwgts
+          close(41)
+          open(41, file='header.txt')
+          MonteCarlo='FO'
+@@ -59,8 +64,11 @@
+       integer ibody
+       logical passed_unwgt
+       integer nwgts,nevents
+-      double precision sum_of_wgts
+-      common/to_lhe_analysis/sum_of_wgts,nwgts,nevents,passed_unwgt
++      double precision sum_of_wgts,sum_of_bwgts
++      double precision cur_bias_wgt
++      common /c_fo_lhe_bias/cur_bias_wgt
++      common/to_lhe_analysis/sum_of_wgts,sum_of_bwgts,nwgts,nevents,
++     &     passed_unwgt
+ c
+       integer i,j,npart
+       double precision ran2
+@@ -129,6 +137,7 @@
+       endif
+ c --- accumulate the total weights of all the events in the event file
+       sum_of_wgts=sum_of_wgts+wwgts(1)
++      sum_of_bwgts=sum_of_bwgts+wwgts(1)*cur_bias_wgt
+ 
+ c --- fill the multi-weight common blocks with the scale and PDF
+ c --- variation weights
+@@ -217,8 +226,9 @@
+       implicit none
+       logical passed_unwgt
+       integer nwgts,nevents
+-      double precision sum_of_wgts
+-      common/to_lhe_analysis/sum_of_wgts,nwgts,nevents,passed_unwgt
++      double precision sum_of_wgts,sum_of_bwgts
++      common/to_lhe_analysis/sum_of_wgts,sum_of_bwgts,nwgts,nevents,
++     &     passed_unwgt
+       if (passed_unwgt) then
+          nevents=nevents+1
+          write (41,'(a)') '</eventgroup>'
+--- a/madgraph/interface/amcatnlo_run_interface.py
++++ b/madgraph/interface/amcatnlo_run_interface.py
+@@ -2300,6 +2300,11 @@
+         if (not jobs_to_run_new) and fixed_order:
+             # print final summary of results (for fixed order)
+             scale_pdf_info=self.collect_scale_pdf_info(options,jobs_to_collect)
++            # PATCH (bias): physical (bias-removed) total for the summary
++            self.cross_sect_dict.pop('xsect_unbiased', None)
++            unbiased = self.fo_lhe_unbiased_total(jobs_to_collect)
++            if unbiased:
++                self.cross_sect_dict['xsect_unbiased'], self.cross_sect_dict['errt_unbiased'] = unbiased
+             self.print_summary(options,integration_step,mode,scale_pdf_info,done=True)
+             return jobs_to_run_new,jobs_to_collect
+         elif jobs_to_run_new:
+@@ -2892,6 +2897,26 @@
+             logger.info('The results of this run' + \
+                         ' have been saved in %s' % pjoin(self.me_dir, 'Events', self.run_name))
+ 
++    def fo_lhe_unbiased_total(self, jobs):
++        """PATCH (bias): physical total cross section of a biased fixed-order run with LHE output.
++        Each job's events.lhe ends with 'nevents sum_w cross sum_w*bias' (cross = biased integral,
++        event weights with the bias divided out), so sigma_job = cross*sum_w/sum_(w*bias).
++        Returns (total, error) or None if the information is not available."""
++        if self.run_card['event_norm'].lower() != 'bias':
++            return None
++        total, var = 0., 0.
++        for job in jobs:
++            path = pjoin(job['dirname'], 'events.lhe')
++            if not os.path.exists(path):
++                return None
++            vals = [float(i) for i in misc.BackRead(path).readline().split()]
++            if len(vals) < 4 or vals[2] == 0 or vals[3] == 0:
++                return None
++            sigma = vals[2]/vals[3]*vals[1]
++            total += sigma
++            var += (job['error']*sigma/vals[2])**2
++        return total, math.sqrt(var)
++
+     def combine_FO_lhe(self,jobs):
+         """combine the various lhe file generated in each directory.
+            They are two steps:
+@@ -2921,8 +2946,24 @@
+ #        <generator name='MadGraph5_aMC@NLO' version='2.5.2'>please cite 1405.0301 </generator>
+ #        </init>
+ 
+-        cross = sum(j['result'] for j in jobs)
+-        error = math.sqrt(sum(j['error'] for j in jobs))
++        # PATCH (bias normalisation): each job writes 'nevents sum_w cross [sum_w*bias]'.
++        # cross is the integral of the (possibly biased) integrand; the event weights have the
++        # bias divided out. Normalising with cross/sum(w*bias) gives every job (and therefore
++        # every channel) its unbiased cross section. Without a 4th number: old behaviour.
++        def _fo_lhe_norm(dirname):
++            vals = [float(i) for i in misc.BackRead(pjoin(dirname,'events.lhe')).readline().split()]
++            nb_event, sumwgt, cross_j = vals[:3]
++            if len(vals) > 3 and vals[3] != 0:
++                ratio = cross_j/vals[3]
++            else:
++                ratio = cross_j/sumwgt
++            return int(nb_event), ratio, ratio*sumwgt, cross_j
++        fo_norm = dict((j['dirname'], _fo_lhe_norm(j['dirname'])) for j in jobs)
++        cross = sum(fo_norm[j['dirname']][2] for j in jobs)
++        # job['error'] is an absolute error: combine in quadrature (the original code summed the
++        # errors linearly), scaling each job's error to the unbiased normalisation.
++        error = math.sqrt(sum((j['error']*fo_norm[j['dirname']][2]/fo_norm[j['dirname']][3])**2
++                              if fo_norm[j['dirname']][3] else j['error']**2 for j in jobs))
+         self.banner['init'] = "0 0 0e0 0e0 0 0 0 0 -4 1\n  %s %s %s 1" % (cross, error, cross)
+         self.banner.write(output[:-3], close_tag=False)
+         misc.gzip(output[:-3])
+@@ -2939,10 +2980,7 @@
+             for job in jobs:
+                 dirname = job['dirname']
+                 #read last line
+-                lastline = misc.BackRead(pjoin(dirname,'events.lhe')).readline()
+-                nb_event, sumwgt, cross = [float(i) for i in lastline.split()]
+-                # get normalisation ratio 
+-                ratio = cross/sumwgt
++                nb_event, ratio, _, _ = fo_norm[dirname]
+                 lhe = lhe_parser.EventFile(pjoin(dirname,'events.lhe'))
+                 lhe.eventgroup = True # read the events by eventgroup
+                 for eventsgroup in lhe:
+@@ -2967,10 +3005,9 @@
+             globallhe.eventgroup = True
+             for job in jobs:
+                 dirname = job['dirname']
+-                lastline = misc.BackRead(pjoin(dirname,'events.lhe')).readline()
+-                nb_event, sumwgt, cross = [float(i) for i in lastline.split()]
+-                lastlhe = globallhe.add(pjoin(dirname,'events.lhe'),cross, 0, cross,
+-                                        nb_event=int(nb_event), scale=cross/sumwgt)
++                nb_event, ratio, cross_true, _ = fo_norm[dirname]
++                lastlhe = globallhe.add(pjoin(dirname,'events.lhe'),cross_true, 0, cross_true,
++                                        nb_event=int(nb_event), scale=ratio)
+             for eventsgroup in globallhe:
+                 neweventsgroup = []
+                 for i,event in enumerate(eventsgroup):
+@@ -3242,6 +3279,10 @@
+             message = message + \
+                       '\n      %(xsec_string)s: %(xsect)8.3e +- %(errt)6.1e %(unit)s' % \
+                       self.cross_sect_dict
++            if 'xsect_unbiased' in self.cross_sect_dict:  # PATCH (bias)
++                message = message + \
++                      '\n      Total cross section, bias removed: %(xsect_unbiased)8.3e +- %(errt_unbiased)6.1e %(unit)s' % \
++                      self.cross_sect_dict
+             message = message + \
+                       '\n   --------------------------------------------------------------'
+             if scale_pdf_info and (self.run_card['nevents']>=10000 or mode in ['NLO', 'LO']):
+--- a/madgraph/interface/madevent_interface.py
++++ b/madgraph/interface/madevent_interface.py
+@@ -3931,6 +3931,7 @@
+         init = False
+         cross = collections.defaultdict(float)
+         nb_event = 0
++        sum_w2 = 0.  # PATCH (bias): for the MC error of the bias-corrected cross section
+         for event in lhe:
+             rwgt_info = event.parse_reweight()
+             if not init:
+@@ -3946,6 +3947,7 @@
+             del event.reweight_data['bias']
+             # compute the new cross-section
+             cross[event.ievent] += event.wgt
++            sum_w2 += event.wgt**2
+             nb_event +=1
+             output.write(str(event))
+         output.write('</LesHouchesEvents>')
+@@ -3955,6 +3957,16 @@
+         # MODIFY THE BANNER i.e. INIT BLOCK
+         # ensure information compatible with normalisation choice
+         total_cross = sum(cross[key] for key in cross)
++        # PATCH (bias): MC error of the corrected estimate, from the spread of the corrected weights
++        # (the original code set it to 0). sum: total = sum w; average: total = sum w / N.
++        sum_w = total_cross
++        var_sum = max(sum_w2 - sum_w**2/nb_event, 0.) if nb_event else 0.
++        total_error = math.sqrt(var_sum)
++        norm = self.run_card['event_norm'] if 'event_norm' in self.run_card else 'sum'
++        if norm == 'average' and nb_event:
++            total_error /= nb_event
++        elif norm not in ['sum', 'average']:
++            total_error = 0.
+         if 'event_norm' in self.run_card: # if not this is "sum"
+             if self.run_card['event_norm'] == 'average':
+                 total_cross = total_cross / nb_event
+@@ -3968,6 +3980,21 @@
+         bannerfile = lhe_parser.EventFile(pjoin(self.me_dir, 'Events', self.run_name, '.banner.tmp.gz'),'w')
+         banner = banner_mod.Banner(lhe.banner)
+         banner.modify_init_cross(cross)
++        # PATCH (bias): the generation info was written before the bias correction and still
++        # holds the biased integral; update it (also in the banner kept for the run summary)
++        def _set_generation_info(bnr):
++            # banners read from file store the tag in lower case; drop every variant first
++            for key in [k for k in list(bnr.keys()) if k.lower() == 'mggenerationinfo']:
++                del bnr[key]
++            bnr.add_generation_info(total_cross, nb_event)
++        _set_generation_info(banner)
++        if getattr(self, 'banner', None) is not None:
++            _set_generation_info(self.banner)
++            # the run banner (<run>_<tag>_banner.txt) was written before the correction
++            run_banner = pjoin(self.me_dir, 'Events', self.run_name,
++                               '%s_%s_banner.txt' % (self.run_name, self.run_card['run_tag']))
++            if os.path.exists(run_banner):
++                self.banner.write(run_banner)
+         banner.set_lha_strategy(-4)
+         banner.write(bannerfile, close_tag=False)
+         bannerfile.close()
+@@ -3982,7 +4009,7 @@
+         
+                 
+         self.results.current['cross'] = total_cross
+-        self.results.current['error'] = 0
++        self.results.current['error'] = total_error
+          
+     ############################################################################ 
+     def do_store_events(self, line):
